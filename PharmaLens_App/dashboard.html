@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PharmaLens | Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'class', theme: { extend: {
+    fontFamily: { sans: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+    colors: { teal: { brand: 'rgb(var(--brand) / <alpha-value>)', deep: 'rgb(var(--brand-deep) / <alpha-value>)' } }
+  } } };
+</script>
+<script>
+  /* Theme bootstrap: runs before first paint so there is no flash of the wrong theme */
+  (function () {
+    var KEY = 'pharmalens_theme';
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    function get() {
+      var t = null;
+      try { t = localStorage.getItem(KEY); } catch (e) {}
+      return (t === 'light' || t === 'dark') ? t : 'system';
+    }
+    function apply() {
+      var t = get();
+      var dark = t === 'dark' || (t === 'system' && !!mq && mq.matches);
+      document.documentElement.classList.toggle('dark', dark);
+    }
+    function set(t) {
+      try { localStorage.setItem(KEY, t); } catch (e) {}
+      apply();
+    }
+    if (mq) {
+      if (mq.addEventListener) mq.addEventListener('change', apply);
+      else if (mq.addListener) mq.addListener(apply);
+    }
+    window.PLTheme = { get: get, set: set, apply: apply };
+    apply();
+  })();
+</script>
+<style>
+  :root { --ease: cubic-bezier(0.4, 0, 0.2, 1); --brand: 15 118 110; --brand-deep: 11 90 84; }
+  html.dark { --brand: 45 212 191; --brand-deep: 153 246 228; color-scheme: dark; }  /* teal-400 for legibility on dark */
+
+  /* ===== DARK MODE: remaps the light utility classes used across both portals ===== */
+  html.dark body.bg-slate-50 { background-color: #0b1220; color: #e2e8f0; }
+  .dark .bg-white { background-color: #111a2b; }
+  .dark .bg-white.shadow-inner { background-color: #fff; }               /* prescription paper stays light */
+  .dark .bg-white\/90 { background-color: rgba(17,26,43,.9); }
+  .dark .bg-slate-50 { background-color: #16213a; }
+  .dark .bg-slate-100 { background-color: #1e293b; }
+  .dark .bg-slate-900 { background-color: #e2e8f0; }
+  .dark .bg-slate-900.text-white { color: #0f172a; }
+  .dark .hover\:bg-slate-50:hover { background-color: #16213a; }
+  .dark .hover\:bg-slate-100:hover { background-color: #1e293b; }
+  .dark .hover\:bg-slate-700:hover { background-color: #fff; }
+  .dark .text-slate-900 { color: #f1f5f9; }
+  .dark .text-slate-800, .dark .hover\:text-slate-800:hover { color: #e2e8f0; }
+  .dark .text-slate-700 { color: #cbd5e1; }
+  .dark .text-slate-600 { color: #a8b4c7; }
+  .dark .text-slate-500 { color: #94a3b8; }
+  .dark .text-slate-400 { color: #6b7a90; }
+  .dark .border-slate-200 { border-color: #263349; }
+  .dark .border-slate-100 { border-color: #1c273b; }
+  .dark .border-slate-300 { border-color: #3b4a63; }
+  .dark .hover\:border-slate-400:hover { border-color: #64748b; }
+  .dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #1c273b; }
+  .dark .ring-slate-200 { --tw-ring-color: rgba(148,163,184,.25); }
+  .dark .bg-teal-brand.text-white { color: #042f2e; }                    /* dark text on the lighter dark-mode teal */
+  .dark .bg-teal-50 { background-color: rgba(45,212,191,.12); }
+  .dark .hover\:bg-teal-50:hover { background-color: rgba(45,212,191,.16); }
+  .dark .hover\:bg-teal-100:hover { background-color: rgba(45,212,191,.22); }
+  .dark .border-teal-200 { border-color: rgba(45,212,191,.35); }
+  .dark .ring-teal-200 { --tw-ring-color: rgba(45,212,191,.35); }
+  .dark .text-teal-900 { color: #99f6e4; }
+  .dark .bg-red-50 { background-color: rgba(239,68,68,.14); }
+  .dark .bg-red-50\/50, .dark .hover\:bg-red-50\/40:hover { background-color: rgba(239,68,68,.08); }
+  .dark .text-red-700 { color: #fca5a5; }
+  .dark .ring-red-200 { --tw-ring-color: rgba(248,113,113,.35); }
+  .dark .border-red-100 { border-color: rgba(248,113,113,.25); }
+  .dark .bg-amber-50 { background-color: rgba(245,158,11,.14); }
+  .dark .text-amber-700 { color: #fcd34d; }
+  .dark .border-red-200 { border-color: rgba(248,113,113,.4); }
+  .dark .text-red-800 { color: #fecaca; }
+  .dark .bg-yellow-50 { background-color: rgba(234,179,8,.12); }
+  .dark .bg-yellow-100 { background-color: rgba(234,179,8,.18); }
+  .dark .text-yellow-800 { color: #fde047; }
+  .dark .text-yellow-700 { color: #facc15; }
+  .dark .ring-yellow-400 { --tw-ring-color: rgba(250,204,21,.45); }
+  .dark .border-yellow-300 { border-color: rgba(250,204,21,.4); }
+  .dark .hover\:bg-yellow-50\/60:hover { background-color: rgba(234,179,8,.08); }
+  .dark .ring-amber-200 { --tw-ring-color: rgba(251,191,36,.35); }
+  .dark input, .dark select, .dark textarea { background-color: #0f1a2e; color: #e2e8f0; border-color: #3b4a63; }
+  .dark ::placeholder { color: #6b7a90; }
+  .dark .btn:focus-visible, .dark .conflict-row:focus-visible, .dark input:focus-visible, .dark select:focus-visible, .dark textarea:focus-visible { box-shadow: 0 0 0 4px rgba(45,212,191,.35); }
+  body { font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif; }
+  [hidden] { display: none !important; }
+
+  .reveal { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .4s var(--ease), opacity .35s var(--ease); }
+  .reveal > div { overflow: hidden; min-height: 0; }
+  .reveal.open { grid-template-rows: 1fr; opacity: 1; }
+  .view-in { animation: viewIn .45s var(--ease) both; }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .conflict-row { cursor: pointer; transition: background-color .2s var(--ease); }
+  .chev { transition: transform .3s var(--ease); }
+  .conflict-row[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  .btn:focus-visible, .conflict-row:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(15,118,110,.25); }
+
+  /* Modal */
+  .modal { visibility: hidden; opacity: 0; transition: opacity .25s var(--ease), visibility .25s; }
+  .modal.open { visibility: visible; opacity: 1; }
+  .modal .sheet { transform: translateY(12px) scale(.97); transition: transform .3s var(--ease); }
+  .modal.open .sheet { transform: none; }
+
+  /* Toast */
+  #toast { transform: translateY(24px); opacity: 0; pointer-events: none; transition: transform .35s var(--ease), opacity .35s var(--ease); }
+  #toast.show { transform: none; opacity: 1; }
+
+  /* Print-only sheet is invisible on screen */
+  #printSheet { display: none; }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; } }
+
+  /* ===== PRINT: prescription pad ===== */
+  @media print {
+    @page { margin: 16mm; }
+    html, body { background: #fff !important; color: #000 !important; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
+    body > *:not(#printSheet) { display: none !important; }   /* nav, buttons, tabs, modals, toast, both portals */
+    #printSheet { display: block !important; font-family: Georgia, 'Times New Roman', serif; color: #111; min-height: 240mm; position: relative; padding: 0 6mm; }
+    #printSheet .pad-head { text-align: center; border-bottom: 3px double #111; padding-bottom: 10mm; }
+    #printSheet .pad-head h1 { font-size: 24pt; font-weight: 700; letter-spacing: .02em; margin: 0; }
+    #printSheet .pad-head p { margin: 2mm 0 0; font-size: 10.5pt; color: #333; }
+    #printSheet .pad-meta { display: flex; justify-content: space-between; margin-top: 8mm; font-size: 11.5pt; }
+    #printSheet .rx { font-size: 92pt; line-height: 1; font-style: italic; margin: 8mm 0 2mm; }
+    #printSheet ol { list-style: none; margin: 0; padding: 0 0 0 14mm; }
+    #printSheet li { padding: 4mm 0; border-bottom: 1px solid #bbb; font-size: 14pt; page-break-inside: avoid; }
+    #printSheet li small { display: block; font-size: 10.5pt; color: #444; margin-top: 1mm; font-style: italic; }
+    #printSheet .sign { position: absolute; left: 6mm; right: 6mm; bottom: 0; font-size: 12pt; display: flex; justify-content: space-between; align-items: flex-end; }
+    #printSheet .sign span.line { display: inline-block; min-width: 70mm; border-bottom: 1px solid #111; margin-left: 2mm; }
+  }
+</style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
+
+<!-- ================= TOP NAV ================= -->
+<header class="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+  <div class="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 sm:px-6">
+    <div class="flex min-w-0 items-center gap-3">
+      <div class="flex shrink-0 items-center gap-2.5">
+        <svg class="text-teal-brand" width="30" height="30" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+          <circle cx="22" cy="22" r="19" stroke="currentColor" stroke-width="3" />
+          <rect x="11" y="17" width="22" height="10" rx="5" transform="rotate(-35 22 22)" fill="currentColor" />
+          <path d="M36 36l6 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+        </svg>
+        <span class="hidden text-lg font-extrabold tracking-tight text-teal-brand md:inline">PharmaLens</span>
+      </div>
+      <!-- Profile avatar (top left, directly beside the logo): opens the profile dropdown -->
+      <div id="profileWrap" class="relative shrink-0">
+        <button id="profileBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="profileMenu" aria-label="Open profile menu" class="btn flex h-10 w-10 items-center justify-center rounded-full bg-teal-50 text-sm font-bold text-teal-brand ring-1 ring-inset ring-teal-200 transition duration-200 hover:bg-teal-100">
+          <span id="profileInitials" aria-hidden="true">?</span>
+        </button>
+        <div id="profileMenu" role="dialog" aria-label="My profile" hidden class="absolute left-0 top-full z-30 mt-2 flex max-h-[calc(100vh-5.5rem)] w-[22rem] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+          <div class="flex shrink-0 items-center gap-3 border-b border-slate-100 px-4 py-3.5">
+            <span id="pmAvatar" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-50 text-base font-bold text-teal-brand ring-1 ring-inset ring-teal-200" aria-hidden="true">?</span>
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-slate-900">My profile</p>
+              <p id="pmRole" class="text-xs font-semibold uppercase tracking-wide text-teal-brand"></p>
+            </div>
+            <button id="profileEditBtn" type="button" aria-label="Edit profile" title="Edit profile" class="btn inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition duration-200 hover:border-teal-brand hover:text-teal-brand">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+              Edit
+            </button>
+          </div>
+          <form id="profileForm" novalidate class="flex min-h-0 flex-1 flex-col">
+            <div id="profileFields" class="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm"></div>
+            <p id="profileError" hidden role="alert" class="shrink-0 px-4 pb-2 text-sm font-medium text-red-700"></p>
+            <div id="profileActions" hidden class="flex shrink-0 justify-end gap-2 border-t border-slate-100 px-4 py-3">
+              <button type="button" id="profileCancel" class="btn rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">Cancel</button>
+              <button type="submit" class="btn rounded-lg bg-teal-brand px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-teal-deep">Save</button>
+            </div>
+          </form>
+          <a id="pmChangePw" href="login.html#change-password" class="btn flex shrink-0 items-center gap-2 border-t border-slate-100 px-4 py-3 text-sm font-semibold text-teal-brand transition duration-200 hover:bg-teal-50">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg>
+            Change Password
+          </a>
+        </div>
+      </div>
+      <!-- Patient only: identity -->
+      <div id="navPatient" hidden class="flex min-w-0 items-center gap-2">
+        <span class="truncate text-sm font-semibold text-slate-700 sm:text-base">Welcome, <span id="navPatientName"></span></span>
+        <span class="hidden h-5 shrink-0 border-l border-slate-300 sm:block" aria-hidden="true"></span>
+        <span id="navPatientId" title="Your patient ID" class="shrink-0 rounded-md bg-teal-50 px-2 py-1 font-mono text-xs font-bold tracking-wide text-teal-brand ring-1 ring-inset ring-teal-200 sm:text-sm"></span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Patient only: Current / History toggle -->
+      <div id="tabToggle" hidden class="flex rounded-xl bg-slate-100 p-1" role="group" aria-label="Patient portal view">
+        <button type="button" id="tabCurrent" data-tab="current" aria-pressed="true" class="btn rounded-lg px-3 py-1.5 text-sm font-semibold transition duration-200">Current</button>
+        <button type="button" id="tabHistory" data-tab="history" aria-pressed="false" class="btn rounded-lg px-3 py-1.5 text-sm font-semibold transition duration-200">History</button>
+      </div>
+      <!-- GLOBAL CONTROLS: the theme selector lives in the permanent header, outside both role sections.
+           applyRole() only toggles #pharmacistView, #patientView, #tabToggle and #navPatient, so it can never hide this. -->
+      <label for="themeSelect" class="sr-only">Theme</label>
+      <select id="themeSelect" class="btn rounded-lg border border-slate-300 bg-white py-2 pl-3 pr-2 text-sm font-semibold text-slate-700 transition duration-200 hover:border-slate-400">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="system">System Default</option>
+      </select>
+      <button id="logoutBtn" type="button" class="btn rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition duration-200 hover:border-slate-400 hover:bg-slate-50">Log Out</button>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+
+  <!-- ================= PHARMACIST VIEW ================= -->
+  <section id="pharmacistView" hidden aria-labelledby="phTitle">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="flex items-center gap-3">
+        <h1 id="phTitle" class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Pharmacist Portal</h1>
+        <span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">Demo Mode</span>
+      </div>
+      <div class="flex flex-col gap-3 sm:flex-row">
+        <button id="connectBtn" type="button" class="btn inline-flex items-center justify-center gap-2 rounded-xl border border-teal-brand bg-white px-5 py-3 text-base font-semibold text-teal-brand transition duration-200 hover:bg-teal-50 active:scale-[.99]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          Connect Patient
+        </button>
+      </div>
+    </div>
+    <p class="mt-2 text-slate-500">Connect a patient with their Patient ID, answer their questions and resolve medicine conflicts before they reach the patient.</p>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
+
+      <!-- ===== Sidebar: connected patients ===== -->
+      <aside aria-label="Connected patients" class="lg:sticky lg:top-24 lg:self-start">
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
+            <h2 class="font-semibold text-slate-900">Connected Patients</h2>
+            <span id="patientCount" class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600">0</span>
+          </div>
+          <div class="border-b border-slate-100 p-3">
+            <label for="patientSearch" class="sr-only">Search patients by name or ID</label>
+            <input id="patientSearch" type="search" autocomplete="off" placeholder="Search name or ID" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:border-teal-brand" />
+          </div>
+          <ul id="patientList" class="max-h-[calc(100vh-17rem)] min-h-[8rem] space-y-1 overflow-y-auto p-2"></ul>
+        </div>
+      </aside>
+
+      <!-- ===== Workspace ===== -->
+      <div class="min-w-0">
+        <div id="wsEmpty" class="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+          <svg class="text-slate-400" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          <p id="wsEmptyText" class="mt-3 max-w-sm text-slate-500">Select a patient from the sidebar to open their workspace.</p>
+        </div>
+
+        <div id="wsPatient" hidden>
+          <!-- Patient header -->
+          <div class="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <span id="wsAvatar" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-50 text-base font-bold text-teal-brand"></span>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 id="wsName" class="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl"></h2>
+                <span id="wsId" title="Patient ID" class="rounded-md bg-teal-50 px-2 py-1 font-mono text-xs font-bold tracking-wide text-teal-brand ring-1 ring-inset ring-teal-200 sm:text-sm"></span>
+              </div>
+              <p id="wsMeta" class="mt-0.5 truncate text-sm text-slate-500"></p>
+            </div>
+          </div>
+
+          <!-- 40 / 60 split -->
+          <div class="mt-6 grid gap-6 lg:grid-cols-5">
+            <!-- 40%: patient queries -->
+            <section class="lg:col-span-2" aria-labelledby="phChatTitle">
+              <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 px-4 py-3.5 sm:px-5">
+                  <h3 id="phChatTitle" class="font-semibold text-slate-900">Live chat</h3>
+                  <p class="text-sm text-slate-500">Questions this patient sent from Ask your Pharmacist. Your replies are saved and appear in their portal.</p>
+                </div>
+                <ul id="phChatLog" class="flex max-h-96 min-h-[16rem] flex-col gap-3 overflow-y-auto bg-slate-50 px-4 py-4 sm:px-5" aria-live="polite"></ul>
+                <form id="phChatForm" class="flex items-end gap-2 border-t border-slate-100 p-3 sm:p-4">
+                  <label for="phChatInput" class="sr-only">Your reply</label>
+                  <textarea id="phChatInput" rows="1" maxlength="1000" placeholder="Type your reply..." class="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-teal-brand"></textarea>
+                  <button type="submit" class="btn inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-teal-brand px-4 text-sm font-semibold text-white transition duration-200 hover:bg-teal-deep active:scale-[.99]">
+                    Reply
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                  </button>
+                </form>
+              </div>
+            </section>
+
+            <!-- 60%: prescription review -->
+            <section class="min-w-0 lg:col-span-3" aria-labelledby="phRxTitle">
+              <div class="flex flex-wrap items-center justify-between gap-2 px-1 pb-3">
+                <h3 id="phRxTitle" class="font-semibold text-slate-900">Prescription review</h3>
+                <p id="phRxSummary" class="text-sm text-slate-500"></p>
+              </div>
+              <div id="phRxList" class="space-y-5"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PATIENT VIEW ================= -->
+  <section id="patientView" hidden class="mx-auto max-w-[800px]" aria-label="Patient Portal">
+    <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Patient Portal</h1>
+    </div>
+
+    <!-- CURRENT -->
+    <div id="currentTab" class="mt-6">
+      <!-- Ask your Pharmacist: query / chat (top of Current tab) -->
+      <section id="chatCard" class="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-labelledby="chatTitle">
+        <div class="border-b border-slate-100 px-4 py-3.5 sm:px-5">
+          <h2 id="chatTitle" class="text-lg font-semibold text-slate-900">Ask your Pharmacist</h2>
+          <p class="text-sm text-slate-500">Send a question about your medicines and your pharmacist will reply here. For emergencies, call your local emergency number instead.</p>
+        </div>
+        <ul id="chatLog" class="flex max-h-72 min-h-[9rem] flex-col gap-3 overflow-y-auto bg-slate-50 px-4 py-4 sm:px-5" aria-live="polite"></ul>
+        <form id="chatForm" class="flex items-end gap-2 border-t border-slate-100 p-3 sm:p-4">
+          <label for="chatInput" class="sr-only">Your question for the pharmacist</label>
+          <textarea id="chatInput" rows="1" maxlength="1000" placeholder="Type your question..." class="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-teal-brand"></textarea>
+          <button id="chatSend" type="submit" class="btn inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-teal-brand px-4 text-sm font-semibold text-white transition duration-200 hover:bg-teal-deep active:scale-[.99]">
+            Send
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </form>
+      </section>
+
+      <h2 class="text-xl font-semibold text-slate-900">Current Medications</h2>
+      <div id="verifiedBanner" hidden class="mt-4 flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4 sm:p-5">
+        <svg class="mt-0.5 shrink-0 text-teal-brand" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
+        <p class="font-medium text-teal-900">These instructions have been verified by your clinical team.</p>
+      </div>
+
+      <input id="ptFile" type="file" accept="image/*" capture="environment" class="hidden" />
+      <button id="ptUploadBtn" type="button" class="btn mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-brand px-5 py-3.5 text-base font-semibold text-white shadow-lg shadow-teal-900/10 transition duration-200 hover:bg-teal-deep active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto">
+        <svg id="ptUploadIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span id="ptUploadLabel">Upload New Prescription</span>
+      </button>
+
+      <ul id="currentList" class="mt-6 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"></ul>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="historyTab" hidden class="mt-6">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-xl font-semibold text-slate-900">Past Prescriptions</h2>
+        <button id="printBtn" type="button" class="btn inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition duration-200 hover:border-teal-brand hover:text-teal-brand">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Download Official Record
+        </button>
+      </div>
+      <ul id="historyList" class="mt-4 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"></ul>
+    </div>
+  </section>
+</main>
+
+<!-- ================= MODAL: CONNECT PATIENT ================= -->
+<div id="modal" class="modal fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4" aria-hidden="true">
+  <div class="sheet w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-7" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle" class="text-xl font-bold text-slate-900">Enter Patient ID</h2>
+    <p class="mt-1 text-sm text-slate-500">Ask the patient for the ID shown next to their name in their portal, for example PL-4928.</p>
+    <form id="patientForm" class="mt-5 space-y-4" novalidate>
+      <div>
+        <label for="pId" class="mb-1.5 block text-sm font-semibold text-slate-700">Patient ID</label>
+        <input id="pId" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="PL-4928" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 font-mono uppercase tracking-wide text-slate-900 placeholder-slate-400 transition focus:border-teal-brand" />
+        <p id="connectError" hidden role="alert" class="mt-2 text-sm font-medium text-red-700"></p>
+      </div>
+      <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <button type="button" id="cancelModal" class="btn rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">Cancel</button>
+        <button type="submit" class="btn rounded-xl bg-teal-brand px-5 py-2.5 text-sm font-semibold text-white transition duration-200 hover:bg-teal-deep">Connect Patient</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: ORIGINAL IMAGE ================= -->
+<div id="imgModal" class="modal fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 p-4" aria-hidden="true">
+  <div class="sheet flex max-h-[92vh] w-full max-w-3xl flex-col rounded-2xl bg-white p-4 shadow-2xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="imgTitle">
+    <div class="flex items-start justify-between gap-4">
+      <div class="min-w-0">
+        <h2 id="imgTitle" class="text-lg font-bold text-slate-900">Original prescription image</h2>
+        <p id="imgMeta" class="truncate text-sm text-slate-500"></p>
+      </div>
+      <button id="imgClose" type="button" aria-label="Close image" class="btn shrink-0 rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="mt-4 flex min-h-[220px] flex-1 items-center justify-center overflow-auto rounded-xl bg-slate-100 p-3">
+      <img id="imgFull" alt="Original prescription uploaded by the patient" hidden class="max-h-[62vh] w-auto max-w-full rounded-md object-contain" />
+      <p id="imgMissing" hidden class="max-w-sm text-center text-sm text-slate-500">The original image is not available for this upload. It may have been added before image storage was enabled, or it was too large to keep in browser storage.</p>
+    </div>
+    <p id="imgNote" class="mt-3 text-sm text-slate-600"></p>
+  </div>
+</div>
+
+<!-- ================= TOAST ================= -->
+<div id="toast" role="status" aria-live="polite" class="fixed bottom-5 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-xl">
+  <svg class="shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+  <span id="toastMsg" class="text-sm font-semibold"></span>
+</div>
+
+<!-- ================= PRINT-ONLY: PRESCRIPTION PAD ================= -->
+<div id="printSheet" aria-hidden="true">
+  <div class="pad-head">
+    <h1>PharmaLens Verified Health Record</h1>
+    <p>Medication history · Issued from the PharmaLens patient portal</p>
+  </div>
+  <div class="pad-meta"><span><strong>Patient:</strong> <span id="printPatient">Asha R.</span></span><span><strong>Date:</strong> <span id="printDate"></span></span></div>
+  <div class="rx">Rx</div>
+  <ol id="printList"></ol>
+  <div class="sign"><span>Verified by:<span class="line"></span></span><span>Pharmacist stamp</span></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Generic helpers ---------- */
+  function $(id) { return document.getElementById(id); }
+  function setVisible(el, on) { el.hidden = !on; el.style.display = on ? '' : 'none'; }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  /* Session values (role, which patient/pharmacist is signed in, selection) are kept per tab so that a patient tab and a
+     pharmacist tab can sit side by side. localStorage keeps a copy of the latest sign-in for tabs that have none yet.
+     The database (pharmalens_db) and the theme stay in localStorage so every tab shares them. */
+  function kvGet(k) {
+    var v = null;
+    try { v = sessionStorage.getItem(k); } catch (e) {}
+    if (v == null) { try { v = localStorage.getItem(k); } catch (e) {} }
+    return v;
+  }
+  function kvSet(k, v) {
+    try { sessionStorage.setItem(k, v); } catch (e) {}
+    try { localStorage.setItem(k, v); } catch (e) {}
+  }
+  function kvDel(k) {
+    try { sessionStorage.removeItem(k); } catch (e) {}
+    try { localStorage.removeItem(k); } catch (e) {}
+  }
+  function getRole() {
+    var raw = null;
+    try { raw = kvGet('pharmalens_role') || kvGet('role'); } catch (e) {}
+    if (!raw) return null;
+    raw = String(raw).replace(/^["']+|["']+$/g, '').trim().toLowerCase();   // tolerate quotes / casing
+    return (raw === 'patient' || raw === 'pharmacist') ? raw : null;
+  }
+  function setRole(r) {
+    kvSet('pharmalens_role', r); kvSet('role', r);
+  }
+  function fmtTime(iso) {
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? '' : d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+  function fmtDate(isoDate) {
+    var d = new Date(String(isoDate || '') + 'T00:00:00');
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function fmtDay(iso) {
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function shortName(full) {
+    var parts = String(full || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'Patient';
+    return parts.length === 1 ? parts[0] : parts[0] + ' ' + parts[parts.length - 1].charAt(0).toUpperCase() + '.';
+  }
+  function initials(full) {
+    var parts = String(full || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    return (parts[0].charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '')).toUpperCase();
+  }
+  function autoGrow(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+  }
+  function replayAnim(el) { el.classList.remove('view-in'); void el.offsetWidth; el.classList.add('view-in'); }
+
+  /* ---------- Seed data: injected once, only when pharmalens_db is empty ----------
+     5 test patients + 2 test pharmacists. Passwords are plain text because this is a mock localStorage database;
+     a real deployment must hash them server-side. */
+  var SEED_PATIENTS = [
+    { id: 'PL-1001', name: 'Asha Raman', dob: '1988-04-12', email: 'asha.raman@example.com', password: 'Asha@2026',
+      profile: { gender: 'Female', bloodType: 'B+', allergies: 'Penicillin', conditions: 'Type 2 diabetes, Hypertension', emergencyName: 'Vikram Raman (Spouse)', emergencyPhone: '+91 90000 10001', physician: 'Dr. Meenakshi Iyer' } },
+    { id: 'PL-1002', name: 'Rahul Menon', dob: '1975-09-03', email: 'rahul.menon@example.com', password: 'Rahul@2026',
+      profile: { gender: 'Male', bloodType: 'O+', allergies: 'Sulfonamide antibiotics', conditions: 'Hypothyroidism', emergencyName: 'Divya Menon (Spouse)', emergencyPhone: '+91 90000 10002', physician: 'Dr. Suresh Babu' } },
+    { id: 'PL-1003', name: 'Priya Nair', dob: '1996-01-25', email: 'priya.nair@example.com', password: 'Priya@2026',
+      profile: { gender: 'Female', bloodType: 'A+', allergies: 'None known', conditions: 'Asthma', emergencyName: 'Anitha Nair (Mother)', emergencyPhone: '+91 90000 10003', physician: 'Dr. Kavitha Rao' } },
+    { id: 'PL-1004', name: 'Mohammed Farhan', dob: '1962-11-30', email: 'mohammed.farhan@example.com', password: 'Farhan@2026',
+      profile: { gender: 'Male', bloodType: 'AB+', allergies: 'Aspirin', conditions: 'Coronary artery disease, Type 2 diabetes', emergencyName: 'Sana Farhan (Daughter)', emergencyPhone: '+91 90000 10004', physician: 'Dr. Imran Qureshi' } },
+    { id: 'PL-1005', name: 'Lakshmi Subramanian', dob: '1950-06-18', email: 'lakshmi.subramanian@example.com', password: 'Lakshmi@2026',
+      profile: { gender: 'Female', bloodType: 'B-', allergies: 'Latex, Iodine contrast', conditions: 'Osteoarthritis, Hypertension', emergencyName: 'Ramesh Subramanian (Son)', emergencyPhone: '+91 90000 10005', physician: 'Dr. Meenakshi Iyer' } }
+  ];
+  var SEED_PHARMACISTS = [
+    { id: 'anjali.krishnan@example.org', name: 'Anjali Krishnan', dob: '1985-02-14', email: 'anjali.krishnan@example.org', password: 'Anjali@Rx2026',
+      profile: { gender: 'Female', bloodType: 'O+', allergies: 'None known', conditions: 'None reported', emergencyName: 'Karthik Krishnan (Spouse)', emergencyPhone: '+91 90000 20001', physician: 'Dr. Meenakshi Iyer' } },
+    { id: 'rohan.desai@example.org', name: 'Rohan Desai', dob: '1991-08-07', email: 'rohan.desai@example.org', password: 'Rohan@Rx2026',
+      profile: { gender: 'Male', bloodType: 'A+', allergies: 'Latex', conditions: 'Seasonal allergic rhinitis', emergencyName: 'Neha Desai (Sister)', emergencyPhone: '+91 90000 20002', physician: 'Dr. Suresh Babu' } }
+  ];
+  function seedIfEmpty() {
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem('pharmalens_db')); } catch (e) {}
+    var oldPh = (d && Array.isArray(d.pharmacists)) ? d.pharmacists : [];
+    var legacyDemo = !!d && Array.isArray(d.patients) && d.patients.length === 1 && String(d.patients[0].email || '').toLowerCase() === 'asha.raman@example.com' &&
+      !d.patients[0].password && !(d.patients[0].prescriptions && d.patients[0].prescriptions.length) && !(d.patients[0].queries && d.patients[0].queries.length);
+    var hasPatients = !!d && Array.isArray(d.patients) && d.patients.length > 0 && !legacyDemo;   // a lone auto-made demo patient counts as empty
+    var hasAccounts = oldPh.some(function (r) { return r && r.password; });
+    if (hasPatients || hasAccounts) return false;                 // database already in use: never overwrite it
+    var now = new Date().toISOString();
+    function clone(o) { return JSON.parse(JSON.stringify(o)); }
+    var patients = SEED_PATIENTS.map(function (p) {
+      return { id: p.id, name: p.name, dob: p.dob, email: p.email, password: p.password, seeded: true, createdAt: now,
+               prescriptions: [], queries: [], profile: clone(p.profile) };
+    });
+    var seedIds = SEED_PHARMACISTS.map(function (s) { return s.id; });
+    var pharmacists = oldPh.filter(function (r) { return r && seedIds.indexOf(r.id) === -1; });
+    SEED_PHARMACISTS.forEach(function (s) {
+      var prev = oldPh.filter(function (r) { return r && r.id === s.id; })[0] || {};
+      pharmacists.push({ id: s.id, name: s.name, dob: s.dob, email: s.email, password: s.password, seeded: true, createdAt: now,
+                         profile: clone(s.profile), connected: prev.connected || [], seen: prev.seen || {} });
+    });
+    try { localStorage.setItem('pharmalens_db', JSON.stringify({ version: 1, patients: patients, pharmacists: pharmacists })); return true; }
+    catch (e) { return false; }
+  }
+  seedIfEmpty();                                                 // first load with an empty database: inject the test accounts
+
+  /* ---------- Theme selector (logic bootstrapped in <head> as window.PLTheme) ---------- */
+  var themeSel = $('themeSelect');
+  themeSel.value = window.PLTheme.get();
+  themeSel.addEventListener('change', function () { window.PLTheme.set(themeSel.value); });
+  window.addEventListener('storage', function (e) {          // keep other open tabs in sync
+    if (e.key === 'pharmalens_theme') { window.PLTheme.apply(); themeSel.value = window.PLTheme.get(); }
+  });
+
+  /* ---------- Mock database: localStorage key "pharmalens_db" ----------
+     { version: 1, patients: [ {
+         id, name, dob, email, password, createdAt,
+         profile: { gender, bloodType, allergies, conditions, emergencyName, emergencyPhone, physician },
+         prescriptions: [ { id, fileName, fileType, fileSize, uploadedAt, uploadedBy,
+                            status,              // 'pending_review' | 'reviewed'
+                            imageData,           // compressed data URL of the original upload ('' if unavailable)
+                            medications: [ { id, name, previous, extracted,
+                                             status,       // 'conflict' | 'unreliable' | 'matched' | 'approved' | 'edited' | 'passed'
+                                             decidedAt, decidedBy, originalExtracted } ] } ],
+         queries:       [ { sender, text, timestamp } ]      // sender: 'patient' | 'pharmacist'
+     } ],
+     pharmacists: [ { id,                       // pharmacist's sign-in email (or 'demo-pharmacist')
+                      connected: [ patientId ], // patients linked via "Connect Patient"
+                      seen: { patientId: iso }  // when this pharmacist last viewed that chat (drives "New Message")
+     } ] }                                                                                  */
+  var DB_KEY = 'pharmalens_db', CUR_KEY = 'pharmalens_current_patient', SEL_KEY = 'pharmalens_selected_patient', PH_KEY = 'pharmalens_current_pharmacist',
+      WS_KEY = 'pharmalens_ph_workspace', LAST_PH_KEY = 'pharmalens_last_pharmacist';
+  var ID_CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';          // 32 symbols, no look-alikes (0/O, 1/I)
+
+  function randomChars(n) {
+    var out = '', i, buf = null;
+    if (window.crypto && window.crypto.getRandomValues) buf = window.crypto.getRandomValues(new Uint8Array(n));
+    for (i = 0; i < n; i++) out += ID_CHARS.charAt((buf ? buf[i] : Math.floor(Math.random() * 256)) % ID_CHARS.length);
+    return out;
+  }
+
+  function randomDigits(min, max) {                          // inclusive
+    var span = max - min + 1;
+    if (window.crypto && window.crypto.getRandomValues) return min + (window.crypto.getRandomValues(new Uint32Array(1))[0] % span);
+    return min + Math.floor(Math.random() * span);
+  }
+
+  /* ---------- Real extraction: POST the image to the FastAPI OCR server, then map its JSON ----------
+     Endpoint contract (main.py): returns [ { "Medicine", "Visit 1", "Visit 2", "Status", "Sensor Telemetry" } ]
+     Visit 1 = Hospital EHR baseline held by the server, Visit 2 = the dose OCR read from this image. */
+  var OCR_URL = 'http://localhost:8000/upload';
+  var OCR_TIMEOUT_MS = 90000;                       // vision calls can take a while
+  var OCR_MAX_BYTES = 9.5 * 1024 * 1024;            // server limit is 10 MB; above this a downscaled copy is sent
+  var STABLE_AT = 90;                               // same threshold as the server
+  var EHR_SOURCE = 'Hospital EHR (Stale: 2023)';
+  var NOT_ON_RECORD = 'Not on record', NOT_FOUND = 'Not found on prescription';
+
+  function guessMime(name) {
+    var ext = String(name || '').split('.').pop().toLowerCase();
+    return { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif' }[ext] || 'image/jpeg';
+  }
+  function dataUrlToBlob(u) {
+    var parts = u.split(','), mime = (/data:(.*?);/.exec(parts[0]) || [])[1] || 'image/jpeg';
+    var bin = atob(parts[1]), arr = new Uint8Array(bin.length), i;
+    for (i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  /* Server rows -> pharmalens_db medication objects (rendered by the review table) */
+  function mapRows(rows, uploadedBy) {
+    var newSource = (uploadedBy === 'pharmacist' ? 'Pharmacist' : 'Patient') + ' Upload (New)';
+    var meds = [];
+    (Array.isArray(rows) ? rows : []).forEach(function (r) {
+      if (!r || typeof r !== 'object' || !String(r['Medicine'] == null ? '' : r['Medicine']).trim()) return;
+      var name = String(r['Medicine']).trim();
+      var prev = String(r['Visit 1'] == null ? '' : r['Visit 1']).trim() || NOT_ON_RECORD;
+      var next = String(r['Visit 2'] == null ? '' : r['Visit 2']).trim() || 'Illegible';
+      var note = String(r['Sensor Telemetry'] == null ? '' : r['Sensor Telemetry']).trim();
+      var pct = /(\d{1,3})\s*%/.exec(note), conf = pct ? Math.min(100, parseInt(pct[1], 10)) : null;
+      var missing = next === NOT_FOUND, isNew = prev === NOT_ON_RECORD;
+      /* A shaky OCR reading (low confidence, spike, no score) is flagged yellow even if the doses happen to match */
+      var warn = conf === null || conf < STABLE_AT || /spike|low confidence|unverified|n\/a/i.test(note);
+      var status = String(r['Status']).toLowerCase() === 'matched' ? 'matched' : 'conflict';
+      if (warn && !missing) status = 'unreliable';
+      var med = { id: 'M' + (meds.length + 1), name: name, previous: prev, extracted: next, status: status };
+      if (conf !== null) med.confidence = conf;
+      if (warn) med.telemetry = note || 'Unverified (no confidence reported). Please verify original image.';
+      if (!isNew) med.sourcePrev = EHR_SOURCE;                      // constraint 2: label where each reading came from
+      if (!missing) med.sourceNew = newSource;
+      if (missing) med.kind = 'missing'; else if (isNew) med.kind = 'new';
+      if (status === 'conflict' && !missing && !isNew) med.staleConflict = true;
+      meds.push(med);
+    });
+    return meds;
+  }
+
+  /* Sends the original file (not the downscaled preview) to the OCR server. cb(errorMessage | null, medications) */
+  function extractMedications(file, imageData, uploadedBy, cb) {
+    var blob = file;
+    if (!file.type) blob = new File([file], file.name || 'prescription', { type: guessMime(file.name) });
+    if (file.size > OCR_MAX_BYTES && imageData) blob = dataUrlToBlob(imageData);
+    var fd = new FormData();
+    fd.append('file', blob, file.name || 'prescription.jpg');
+    var ctl = window.AbortController ? new AbortController() : null, finished = false;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, OCR_TIMEOUT_MS);
+    function done(err, meds) { if (finished) return; finished = true; clearTimeout(timer); cb(err, meds); }
+    fetch(OCR_URL, { method: 'POST', body: fd, signal: ctl ? ctl.signal : undefined })
+      .then(function (res) {
+        return res.text().then(function (t) {
+          var body = null;
+          try { body = JSON.parse(t); } catch (e) {}
+          if (!res.ok) {
+            var d = body && body.detail;
+            d = typeof d === 'string' ? d : (d ? JSON.stringify(d) : '');
+            throw new Error('OCR failed (' + res.status + ')' + (d ? ': ' + d.slice(0, 180) : '.'));
+          }
+          return body;
+        });
+      })
+      .then(function (body) {
+        var meds = mapRows(body, uploadedBy);
+        if (!meds.length || meds.every(function (m) { return m.extracted === NOT_FOUND; })) {
+          throw new Error('No medications could be read from this image. Try a clearer photo of the prescription.');
+        }
+        done(null, meds);
+      })
+      .catch(function (e) {
+        if (e && e.name === 'AbortError') done('The OCR server took too long to respond. Please try again.');
+        else if (e instanceof TypeError) done('Could not reach the OCR server at ' + OCR_URL + '. Make sure the FastAPI server is running.');
+        else done((e && e.message) || 'The OCR request failed.');
+      });
+  }
+
+  /* A row needs the pharmacist when it is a dose conflict or an unreliable sensor reading */
+  function needsReview(m) { return m.status === 'conflict' || m.status === 'unreliable'; }
+  function rxHasConflict(rx) {
+    return (rx.medications || []).some(needsReview);
+  }
+  function normalizePatient(p) {
+    if (!Array.isArray(p.prescriptions)) p.prescriptions = [];
+    if (!Array.isArray(p.queries)) p.queries = [];
+    p.prescriptions.forEach(function (rx) {
+      if (!Array.isArray(rx.medications)) rx.medications = [];   // Phase 1 uploads had metadata only
+      if (typeof rx.imageData !== 'string') rx.imageData = '';
+      rx.status = rxHasConflict(rx) ? 'pending_review' : 'reviewed';
+    });
+    return p;
+  }
+  /* "pl-4928", "PL4928" and "4928" all mean PL-4928 */
+  function normalizePatientId(raw) {
+    var t = String(raw == null ? '' : raw).toUpperCase().replace(/\s+/g, '');
+    if (/^\d{4,5}$/.test(t)) return 'PL-' + t;
+    return t.replace(/^PL-?(?=[A-Z0-9])/, 'PL-');
+  }
+  var phSession = null;                                       // pinned when this tab enters the pharmacist portal, so another tab signing in or out cannot change whose list this is
+  function currentPharmacistId() {
+    if (phSession) return phSession;
+    var v = null;
+    v = kvGet(PH_KEY);
+    v = String(v || '').trim().toLowerCase();
+    if (!v) { try { v = String(localStorage.getItem(LAST_PH_KEY) || '').trim().toLowerCase(); } catch (e) {} }   // logout clears the session id; the last pharmacist is remembered so their workspace is found again
+    return v || 'demo-pharmacist';
+  }
+
+  /* ----- Persistent pharmacist workspace -----
+     A second copy of each pharmacist's connected patients, chat "seen" times and selected patient lives in its own
+     localStorage key. Logging out never touches it, and it is merged back into pharmalens_db on every pharmacist
+     sign-in, so the sidebar survives even if another page rewrote or reset the main database record. */
+  function wsRead() {
+    try { var o = JSON.parse(localStorage.getItem(WS_KEY)); return (o && typeof o === 'object') ? o : {}; } catch (e) { return {}; }
+  }
+  function wsWrite(o) { try { localStorage.setItem(WS_KEY, JSON.stringify(o)); } catch (e) {} }
+  function wsSave(rec) {                                        // called after the database accepted a change
+    var all = wsRead(), id = currentPharmacistId(), cur = all[id] || {};
+    var connected = (cur.connected || []).slice(), seen = {}, k;
+    rec.connected.forEach(function (pid) { if (connected.indexOf(pid) === -1) connected.push(pid); });
+    for (k in (cur.seen || {})) seen[k] = cur.seen[k];
+    for (k in rec.seen) if (!seen[k] || rec.seen[k] > seen[k]) seen[k] = rec.seen[k];
+    all[id] = { connected: connected, seen: seen, selected: cur.selected || null };
+    wsWrite(all);
+  }
+  function wsSetSelected(patientId) {
+    var all = wsRead(), id = currentPharmacistId();
+    all[id] = all[id] || { connected: [], seen: {} };
+    all[id].selected = patientId || null;
+    wsWrite(all);
+  }
+  /* This pharmacist's connection record inside d (created on demand when create is true) */
+  function phRecord(d, create) {
+    var id = currentPharmacistId(), i;
+    for (i = 0; i < d.pharmacists.length; i++) {
+      if (d.pharmacists[i].id === id) {
+        var r = d.pharmacists[i];
+        if (!Array.isArray(r.connected)) r.connected = [];
+        if (!r.seen || typeof r.seen !== 'object') r.seen = {};
+        return r;
+      }
+    }
+    if (!create) return null;
+    var rec = { id: id, connected: [], seen: {}, createdAt: new Date().toISOString() };
+    d.pharmacists.push(rec);
+    return rec;
+  }
+  function countUnread(p, rec) {                              // patient messages newer than the pharmacist's last view
+    var seen = rec && rec.seen ? rec.seen[p.id] : null, n = 0;
+    p.queries.forEach(function (m) { if (m.sender === 'patient' && (!seen || m.timestamp > seen)) n++; });
+    return n;
+  }
+  function findPatient(d, id) {
+    for (var i = 0; i < d.patients.length; i++) {
+      if (d.patients[i].id === id) return normalizePatient(d.patients[i]);
+    }
+    return null;
+  }
+
+  var PharmaLensDB = {
+    read: function () {
+      try {
+        var d = JSON.parse(localStorage.getItem(DB_KEY));
+        if (d && Array.isArray(d.patients)) {
+          if (!Array.isArray(d.pharmacists)) d.pharmacists = [];
+          return d;
+        }
+      } catch (e) {}
+      return { version: 1, patients: [], pharmacists: [] };
+    },
+    write: function (d) {
+      try { localStorage.setItem(DB_KEY, JSON.stringify(d)); return true; } catch (e) { return false; }
+    },
+    newId: function (prefix, taken) {
+      var id;
+      do { id = prefix + '-' + randomChars(4); } while (taken.indexOf(id) !== -1);
+      return id;
+    },
+    newPatientId: function (taken) {                          // PL-1000 to PL-9999, matches login.html
+      var id, tries = 0;
+      do {
+        id = 'PL-' + (tries++ < 60 ? randomDigits(1000, 9999) : randomDigits(10000, 99999));
+      } while (taken.indexOf(id) !== -1);
+      return id;
+    },
+    listPatients: function () { return this.read().patients.map(normalizePatient); },
+    getPatient: function (id) { return findPatient(this.read(), id); },
+    addPatient: function (info) {
+      var d = this.read();
+      var p = {
+        id: this.newPatientId(d.patients.map(function (x) { return x.id; })),
+        name: String(info.name || '').trim(),
+        dob: String(info.dob || ''),
+        email: String(info.email || '').trim(),
+        createdAt: new Date().toISOString(),
+        prescriptions: [],
+        queries: []
+      };
+      d.patients.push(p);
+      return this.write(d) ? p : null;
+    },
+    addPrescription: function (patientId, meta) {
+      var d = this.read(), p = findPatient(d, patientId);
+      if (!p) return null;
+      var rx = {
+        id: this.newId('RX', p.prescriptions.map(function (x) { return x.id; })),
+        fileName: meta.fileName || '',
+        fileType: meta.fileType || '',
+        fileSize: meta.fileSize || 0,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: meta.uploadedBy || 'patient',
+        status: 'pending_review',
+        imageData: meta.imageData || '',
+        medications: Array.isArray(meta.medications) ? meta.medications : []   // rows returned by the OCR server
+      };
+      p.prescriptions.push(rx);
+      return this.write(d) ? rx : null;
+    },
+    updateMedication: function (patientId, rxId, medId, changes) {
+      var d = this.read(), p = findPatient(d, patientId);
+      if (!p) return false;
+      var rx = null, med = null, i;
+      for (i = 0; i < p.prescriptions.length; i++) if (p.prescriptions[i].id === rxId) rx = p.prescriptions[i];
+      if (!rx) return false;
+      for (i = 0; i < rx.medications.length; i++) if (rx.medications[i].id === medId) med = rx.medications[i];
+      if (!med) return false;
+      Object.keys(changes).forEach(function (k) { med[k] = changes[k]; });
+      rx.status = rxHasConflict(rx) ? 'pending_review' : 'reviewed';
+      return this.write(d);
+    },
+    /* Patients linked to the signed-in pharmacist, A to Z, each with an .unread count (not persisted) */
+    listConnected: function () {
+      var d = this.read(), rec = phRecord(d, false), out = [];
+      if (!rec) return out;
+      rec.connected.forEach(function (pid) {
+        var p = findPatient(d, pid);
+        if (p) { p.unread = countUnread(p, rec); out.push(p); }
+      });
+      return out.sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+    },
+    isConnected: function (patientId) {
+      var rec = phRecord(this.read(), false);
+      return !!rec && rec.connected.indexOf(patientId) !== -1;
+    },
+    /* Looks the ID up in pharmalens_db and, if it exists, links it to this pharmacist */
+    connectPatient: function (rawId) {
+      var id = normalizePatientId(rawId);
+      if (!id) return { status: 'empty' };
+      var d = this.read(), p = findPatient(d, id);
+      if (!p) return { status: 'notfound', id: id };
+      var rec = phRecord(d, true);
+      if (rec.connected.indexOf(p.id) !== -1) return { status: 'exists', patient: p };
+      rec.connected.push(p.id);
+      if (!this.write(d)) return { status: 'error' };
+      wsSave(rec);
+      return { status: 'ok', patient: p };
+    },
+    unreadCount: function (patientId) {
+      var d = this.read(), p = findPatient(d, patientId);
+      return p ? countUnread(p, phRecord(d, false)) : 0;
+    },
+    markSeen: function (patientId) {
+      var d = this.read(), rec = phRecord(d, false);
+      if (!rec || rec.connected.indexOf(patientId) === -1) return false;
+      rec.seen[patientId] = new Date().toISOString();
+      if (!this.write(d)) return false;
+      wsSave(rec);
+      return true;
+    },
+    /* Writes the 10 profile fields to the signed-in user's own record. kind: 'patient' | 'pharmacist' */
+    saveProfile: function (kind, id, v) {
+      var d = this.read(), rec = null, i, mail = String(v.email).trim().toLowerCase(), me = currentPharmacistId();
+      var taken = d.patients.some(function (p) { return !(kind === 'patient' && p.id === id) && String(p.email || '').toLowerCase() === mail; }) ||
+        d.pharmacists.some(function (r) { return !(kind === 'pharmacist' && r.id === me) && String(r.email || r.id || '').toLowerCase() === mail; });
+      if (taken) return { status: 'email_taken' };
+      if (kind === 'patient') { for (i = 0; i < d.patients.length; i++) if (d.patients[i].id === id) rec = d.patients[i]; }
+      else rec = phRecord(d, true);
+      if (!rec) return { status: 'notfound' };
+      rec.name = v.name; rec.dob = v.dob; rec.email = v.email;
+      if (!rec.profile || typeof rec.profile !== 'object') rec.profile = {};
+      ['gender', 'bloodType', 'allergies', 'conditions', 'emergencyName', 'emergencyPhone', 'physician'].forEach(function (k) { rec.profile[k] = v[k]; });
+      return this.write(d) ? { status: 'ok' } : { status: 'error' };
+    },
+    addQuery: function (patientId, sender, text) {
+      var d = this.read(), p = findPatient(d, patientId);
+      if (!p) return null;
+      var msg = { sender: sender, text: text, timestamp: new Date().toISOString() };
+      p.queries.push(msg);
+      return this.write(d) ? msg : null;
+    }
+  };
+  /* On pharmacist sign-in: rebuild this pharmacist's record in pharmalens_db from the persistent copy */
+  function restorePharmacistWorkspace() {
+    var id = currentPharmacistId(), ws = wsRead()[id] || {};
+    var d = PharmaLensDB.read(), before = d.pharmacists.length, changed = false;
+    var rec = phRecord(d, true);
+    if (d.pharmacists.length !== before) changed = true;
+    (ws.connected || []).forEach(function (pid) {
+      if (rec.connected.indexOf(pid) === -1 && findPatient(d, pid)) { rec.connected.push(pid); changed = true; }
+    });
+    Object.keys(ws.seen || {}).forEach(function (k) {
+      if (!rec.seen[k] || ws.seen[k] > rec.seen[k]) { rec.seen[k] = ws.seen[k]; changed = true; }
+    });
+    if (changed) PharmaLensDB.write(d);
+    wsSave(rec);
+  }
+  window.PharmaLensDB = PharmaLensDB;   // exposed so login.html / later phases can reuse it
+
+  function ensureDemoPatient() {
+    var all = PharmaLensDB.read().patients;
+    if (all.length) return all[0];
+    return PharmaLensDB.addPatient({ name: 'Asha Raman', dob: '1988-04-12', email: 'asha.raman@example.com' });
+  }
+  /* Current patient (patient portal): stored id -> first patient in DB -> seeded demo patient */
+  function getCurrentPatient() {
+    var id = null, p = null;
+    id = kvGet(CUR_KEY);
+    if (id) p = PharmaLensDB.getPatient(id);
+    if (!p) p = PharmaLensDB.listPatients()[0] || null;
+    if (!p) { ensureDemoPatient(); p = PharmaLensDB.listPatients()[0] || null; }
+    if (p) kvSet(CUR_KEY, p.id);
+    return p;
+  }
+
+  /* Reads an image file, downsizes it and returns a JPEG data URL (or '' if it cannot be decoded) */
+  function readImage(file, cb) {
+    var reader = new FileReader();
+    reader.onerror = function () { cb(''); };
+    reader.onload = function () {
+      var img = new Image();
+      img.onerror = function () { cb(''); };
+      img.onload = function () {
+        try {
+          var max = 1280, s = Math.min(1, max / Math.max(img.width, img.height));
+          var c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.width * s));
+          c.height = Math.max(1, Math.round(img.height * s));
+          var ctx = c.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          cb(c.toDataURL('image/jpeg', 0.72));
+        } catch (e) { cb(''); }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  /* Shared by both portals: sends the image to the OCR server, then stores the original image + extracted rows.
+     cb(rx, noImage, errorMessage). Nothing is saved if extraction fails, so no made-up data ever reaches the table. */
+  function submitPrescription(patientId, file, uploadedBy, cb) {
+    readImage(file, function (data) {
+      extractMedications(file, data, uploadedBy, function (err, meds) {
+        if (err) { cb(null, !data, err); return; }
+        var meta = { fileName: file.name, fileType: file.type, fileSize: file.size, uploadedBy: uploadedBy, imageData: data, medications: meds };
+        var rx = PharmaLensDB.addPrescription(patientId, meta);
+        var noImage = !data;
+        if (!rx && data) {                                 // most likely storage quota: retry without the image
+          meta.imageData = '';
+          rx = PharmaLensDB.addPrescription(patientId, meta);
+          noImage = true;
+        }
+        cb(rx, noImage, null);
+      });
+    });
+  }
+
+  /* Shared chat renderer (patient + pharmacist portals) */
+  function buildChat(log, msgs, viewer, otherLabel, emptyText) {
+    log.innerHTML = '';
+    if (!msgs.length) {
+      var empty = document.createElement('li');
+      empty.className = 'my-auto text-center text-sm text-slate-500';
+      empty.textContent = emptyText;
+      log.appendChild(empty);
+      return;
+    }
+    msgs.forEach(function (m) {
+      var mine = m.sender === viewer;
+      var li = document.createElement('li');
+      li.className = 'flex flex-col ' + (mine ? 'items-end' : 'items-start');
+      var bubble = document.createElement('div');
+      bubble.className = 'max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm ' +
+        (mine ? 'rounded-br-md bg-teal-brand text-white' : 'rounded-bl-md bg-white text-slate-800 ring-1 ring-inset ring-slate-200');
+      bubble.textContent = m.text;
+      var meta = document.createElement('span');
+      meta.className = 'mt-1 px-1 text-xs text-slate-500';
+      meta.textContent = (mine ? 'You' : otherLabel) + (fmtTime(m.timestamp) ? ' \u00b7 ' + fmtTime(m.timestamp) : '');
+      li.appendChild(bubble);
+      li.appendChild(meta);
+      log.appendChild(li);
+    });
+    log.scrollTop = log.scrollHeight;
+  }
+
+  /* ---------- Toast ---------- */
+  var toast = $('toast'), toastTimer;
+  function showToast(msg, isErr) {
+    $('toastMsg').textContent = msg;
+    toast.classList.toggle('bg-emerald-600', !isErr);
+    toast.classList.toggle('bg-red-600', !!isErr);
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, isErr ? 8000 : 4000);
+  }
+
+  /* ---------- Overlays (Add Patient + Original Image) ---------- */
+  function openOverlay(el, focusEl) {
+    el._last = document.activeElement;
+    el.classList.add('open');
+    el.setAttribute('aria-hidden', 'false');
+    if (focusEl) setTimeout(function () { focusEl.focus(); }, 60);
+  }
+  function closeOverlay(el) {
+    if (!el.classList.contains('open')) return;
+    el.classList.remove('open');
+    el.setAttribute('aria-hidden', 'true');
+    if (el._last && el._last.focus) el._last.focus();
+  }
+  var modal = $('modal'), imgModal = $('imgModal');
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeOverlay(modal); closeOverlay(imgModal); }
+  });
+
+  /* ---------- Role / traffic controller ---------- */
+  var role = getRole();
+  if (!role) { window.location.replace('login.html'); return; }
+
+  var phView = $('pharmacistView'), ptView = $('patientView');
+  var isPharm = false, patient = null;
+
+  function applyRole() {
+    role = getRole() || 'patient';
+    isPharm = role === 'pharmacist';
+    closeOverlay(modal); closeOverlay(imgModal); setProfileOpen(false);
+    setVisible(phView, isPharm);
+    setVisible(ptView, !isPharm);
+    setVisible($('tabToggle'), !isPharm);
+    setVisible($('navPatient'), false);
+    replayAnim(isPharm ? phView : ptView);
+    document.title = 'PharmaLens | ' + (isPharm ? 'Pharmacist' : 'Patient') + ' Portal';
+    if (isPharm) enterPharmacist(); else enterPatient();
+    renderProfile();
+  }
+
+  /* ---------- Profile avatar + dropdown (view / edit / save) ---------- */
+  var BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'];
+  var GENDERS = ['Female', 'Male', 'Non-binary', 'Prefer not to say'];
+  /* The 10 profile fields. name / dob / email sit on the account record; the rest live under record.profile */
+  var PROFILE_FIELDS = [
+    { key: 'name',           label: 'Full Name',               type: 'text',   auto: 'name', max: 80 },
+    { key: 'dob',            label: 'Date of Birth',           type: 'date',   auto: 'bday' },
+    { key: 'bloodType',      label: 'Blood Type',              type: 'select', options: BLOOD_TYPES },
+    { key: 'gender',         label: 'Gender',                  type: 'select', options: GENDERS },
+    { key: 'allergies',      label: 'Known Allergies',         type: 'text',   max: 200 },
+    { key: 'conditions',     label: 'Chronic Conditions',      type: 'text',   max: 200 },
+    { key: 'emergencyName',  label: 'Emergency Contact Name',  type: 'text',   max: 80 },
+    { key: 'emergencyPhone', label: 'Emergency Contact Phone', type: 'tel',    auto: 'tel', max: 24 },
+    { key: 'physician',      label: 'Primary Care Physician',  type: 'text',   max: 80 },
+    { key: 'email',          label: 'Email',                   type: 'email',  auto: 'email', max: 120 }
+  ];
+  var profileBtn = $('profileBtn'), profileMenu = $('profileMenu'), profileWrap = $('profileWrap');
+  var profileForm = $('profileForm'), profileBody = $('profileFields'), profileActions = $('profileActions');
+  var profileEditBtn = $('profileEditBtn'), profileError = $('profileError');
+  var profileEditing = false;
+
+  function setProfileOpen(on, refocus) {
+    if (!on) profileEditing = false;                            // closing discards unsaved edits
+    profileMenu.hidden = !on;
+    profileBtn.setAttribute('aria-expanded', String(on));
+    if (on) { renderProfileView(); replayAnim(profileMenu); }
+    else if (refocus) profileBtn.focus();
+  }
+  function ageFrom(dob) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dob || ''));
+    if (!m) return null;
+    var now = new Date(), age = now.getFullYear() - +m[1];
+    if (now.getMonth() + 1 < +m[2] || (now.getMonth() + 1 === +m[2] && now.getDate() < +m[3])) age--;
+    return age >= 0 && age < 130 ? age : null;
+  }
+  function titleCase(t) { return String(t).replace(/[._-]+/g, ' ').replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }); }
+
+  /* The signed-in user's own record in pharmalens_db (patient record, or pharmacist record) */
+  function accountRecord() {
+    if (!isPharm) return patient ? PharmaLensDB.getPatient(patient.id) : null;
+    var d = PharmaLensDB.read(), id = currentPharmacistId(), i;
+    for (i = 0; i < d.pharmacists.length; i++) if (d.pharmacists[i].id === id) return d.pharmacists[i];
+    return null;
+  }
+  function profileValues() {
+    var rec = accountRecord() || {}, pr = rec.profile || {}, id = isPharm ? currentPharmacistId() : '', hasMail = id.indexOf('@') > 0;
+    var v = {
+      name: rec.name || (isPharm ? (hasMail ? titleCase(id.split('@')[0]) : 'Demo Pharmacist') : ((patient && patient.name) || '')),
+      dob: rec.dob || '',
+      email: rec.email || (isPharm && hasMail ? id : '')
+    };
+    ['gender', 'bloodType', 'allergies', 'conditions', 'emergencyName', 'emergencyPhone', 'physician'].forEach(function (k) { v[k] = pr[k] || ''; });
+    return v;
+  }
+  /* Avatar + header (always visible); the field list is drawn when the menu opens */
+  function renderProfile() {
+    var v = profileValues(), nm = v.name || (isPharm ? 'Pharmacist' : 'Patient');
+    $('profileInitials').textContent = initials(nm);
+    $('pmAvatar').textContent = initials(nm);
+    $('pmRole').textContent = isPharm ? 'Pharmacist' : 'Patient';
+    profileBtn.setAttribute('aria-label', 'Open profile menu for ' + nm);
+    if (!profileMenu.hidden) renderProfileView();
+  }
+
+  function fieldRow(f, val) {
+    var row = document.createElement('div'), lab = document.createElement('span'), out = document.createElement('span');
+    row.className = 'flex items-baseline justify-between gap-4';
+    lab.className = 'shrink-0 text-slate-500';
+    lab.textContent = f.label;
+    var text = val ? String(val) : '';
+    if (text && f.key === 'dob') {
+      var age = ageFrom(text);
+      text = (fmtDate(text) || text) + (age !== null ? ' (' + age + ' yrs)' : '');
+    }
+    out.className = 'min-w-0 break-words text-right ' + (text ? 'font-semibold text-slate-900' : 'font-medium text-slate-500');
+    out.textContent = text || 'Not provided';
+    row.appendChild(lab); row.appendChild(out);
+    return row;
+  }
+  function fieldInput(f, val) {
+    var wrap = document.createElement('div'), lab = document.createElement('label'), el, id = 'pf_' + f.key;
+    lab.setAttribute('for', id);
+    lab.className = 'mb-1 block text-xs font-semibold text-slate-600';
+    lab.textContent = f.label;
+    if (f.type === 'select') {
+      el = document.createElement('select');
+      var opts = [''].concat(f.options);
+      if (val && f.options.indexOf(val) === -1) opts.push(val);   // keep a stored value that is not in the list
+      opts.forEach(function (o) {
+        var op = document.createElement('option');
+        op.value = o; op.textContent = o || 'Not provided';
+        if (o === (val || '')) op.selected = true;
+        el.appendChild(op);
+      });
+    } else {
+      el = document.createElement('input');
+      el.type = f.type; el.value = val || '';
+      if (f.max) el.maxLength = f.max;
+      if (f.auto) el.autocomplete = f.auto;
+      if (f.type === 'date') el.max = new Date().toISOString().slice(0, 10);
+      el.placeholder = f.type === 'date' ? '' : 'Not provided';
+    }
+    el.id = id; el.name = f.key;
+    el.className = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition focus:border-teal-brand';
+    wrap.appendChild(lab); wrap.appendChild(el);
+    return wrap;
+  }
+  function renderProfileView() {
+    var v = profileValues();
+    profileBody.innerHTML = '';
+    profileError.hidden = true;
+    profileActions.hidden = !profileEditing;
+    profileEditBtn.hidden = profileEditing;
+    PROFILE_FIELDS.forEach(function (f) { profileBody.appendChild(profileEditing ? fieldInput(f, v[f.key]) : fieldRow(f, v[f.key])); });
+  }
+  function startProfileEdit() {
+    profileEditing = true;
+    renderProfileView();
+    var first = $('pf_name'); if (first) first.focus();
+  }
+  function stopProfileEdit() {
+    profileEditing = false;
+    renderProfileView();
+    profileEditBtn.focus();
+  }
+  function readProfileForm() {
+    var out = {};
+    PROFILE_FIELDS.forEach(function (f) { var el = $('pf_' + f.key); out[f.key] = el ? el.value.trim() : ''; });
+    return out;
+  }
+  function profileProblem(v) {                                  // returns { key, msg } or null
+    if (!v.name) return { key: 'name', msg: 'Full name is required.' };
+    if (v.dob) {
+      var t = new Date(v.dob + 'T00:00:00');
+      if (isNaN(t.getTime()) || t.getTime() > Date.now()) return { key: 'dob', msg: 'Enter a valid date of birth that is not in the future.' };
+    }
+    if (v.emergencyPhone && !/^[+\d][\d\s().-]{5,23}$/.test(v.emergencyPhone)) return { key: 'emergencyPhone', msg: 'Enter a valid phone number, for example +91 90000 10001.' };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) return { key: 'email', msg: 'Enter a valid email address.' };
+    return null;
+  }
+  function showProfileError(prob) {
+    profileError.textContent = prob.msg;
+    profileError.hidden = false;
+    var el = $('pf_' + prob.key); if (el) el.focus();
+  }
+  profileForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!profileEditing) return;
+    var v = readProfileForm(), prob = profileProblem(v);
+    if (prob) { showProfileError(prob); return; }
+    var res = PharmaLensDB.saveProfile(isPharm ? 'pharmacist' : 'patient', isPharm ? currentPharmacistId() : (patient && patient.id), v);
+    if (res.status === 'email_taken') { showProfileError({ key: 'email', msg: 'That email is already used by another account.' }); return; }
+    if (res.status !== 'ok') { showProfileError({ key: 'name', msg: 'Could not save your profile. Check browser storage settings.' }); return; }
+    profileEditing = false;
+    if (!isPharm) {                                              // keep the nav bar + print sheet in step with the saved name
+      patient = PharmaLensDB.getPatient(patient.id);
+      $('navPatientName').textContent = shortName(patient.name);
+      $('printPatient').textContent = shortName(patient.name) + ' (' + patient.id + ')';
+    }
+    renderProfile();
+    renderProfileView();
+    profileEditBtn.focus();
+    showToast('Profile saved.');
+  });
+  profileEditBtn.addEventListener('click', startProfileEdit);
+  $('profileCancel').addEventListener('click', stopProfileEdit);
+  profileBtn.addEventListener('click', function (e) { e.stopPropagation(); setProfileOpen(profileMenu.hidden); });
+  /* A click outside closes the menu, except mid-edit, so a stray click cannot throw away typed changes */
+  document.addEventListener('click', function (e) { if (!profileMenu.hidden && !profileEditing && !profileWrap.contains(e.target)) setProfileOpen(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || profileMenu.hidden) return;
+    if (profileEditing) stopProfileEdit(); else setProfileOpen(false, true);
+  });
+  profileMenu.addEventListener('click', function (e) { if (e.target.closest('a')) setProfileOpen(false); });
+
+  $('logoutBtn').addEventListener('click', function () {
+    ['pharmalens_role', 'role', CUR_KEY, SEL_KEY, PH_KEY].forEach(kvDel);   // keep DB + theme
+    window.location.href = 'login.html';
+  });
+
+  /* ======================================================================
+     PHARMACIST PORTAL
+     ====================================================================== */
+  var selectedId = null, filterText = '', openPanels = {}, openEdits = {};
+
+  var STATUS = {
+    conflict: { label: 'Conflict',  cls: 'bg-red-50 text-red-700 ring-red-200',        dot: 'bg-red-500' },
+    matched:  { label: 'Matched',   cls: 'bg-teal-50 text-teal-brand ring-teal-200',   dot: 'bg-teal-600' },
+    approved: { label: 'Approved',  cls: 'bg-teal-50 text-teal-brand ring-teal-200',   dot: 'bg-teal-600' },
+    edited:   { label: 'Edited',    cls: 'bg-teal-50 text-teal-brand ring-teal-200',   dot: 'bg-teal-600' },
+    passed:   { label: 'Passed on', cls: 'bg-slate-100 text-slate-600 ring-slate-200', dot: 'bg-slate-400' },
+    unreliable: { label: 'Unreliable Sensor Reading', cls: 'bg-yellow-100 text-yellow-800 ring-yellow-400', dot: 'bg-yellow-500' }
+  };
+  var WARN = '<svg class="mt-0.5 shrink-0 text-yellow-700" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>';
+  var ALERT = '<svg class="mt-0.5 shrink-0 text-red-700" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>';
+  var STALE_BANNER = 'System Alert: Conflicting reliable sources detected. Do not silently treat newest records as truth. Manual pharmacist reconciliation required.';
+
+  /* Sensor Telemetry (OCR) cell: stable badge, or the low-confidence warning text */
+  function telemetryCellHtml(m) {
+    if (m.telemetry) {
+      return '<td class="px-5 py-4"><div class="flex max-w-[16rem] items-start gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-semibold leading-snug text-yellow-800">' + WARN + '<span>' + esc(m.telemetry) + '</span></div></td>';
+    }
+    var c = typeof m.confidence === 'number' ? m.confidence : null;
+    if (c === null) return '<td class="px-5 py-4 text-slate-400">\u2014</td>';
+    var stable = c >= 90;
+    return '<td class="px-5 py-4"><span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ' +
+      (stable ? 'bg-teal-50 text-teal-brand ring-teal-200' : 'bg-yellow-100 text-yellow-800 ring-yellow-400') + '"><span class="h-1.5 w-1.5 rounded-full ' + (stable ? 'bg-teal-600' : 'bg-yellow-500') + '"></span>' +
+      c + '% (' + (stable ? 'Stable' : 'Low') + ')</span></td>';
+  }
+  function sourceHtml(label, stale) {
+    if (!label) return '';
+    return '<span class="mt-1.5 block text-xs font-semibold ' + (stale ? 'text-amber-700' : 'text-teal-brand') + '">Source: ' + esc(label) + '</span>';
+  }
+  var EYE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var CHEV = '<svg class="chev text-slate-400" width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.3 7.3a1 1 0 011.4 0L10 10.6l3.3-3.3a1 1 0 111.4 1.4l-4 4a1 1 0 01-1.4 0l-4-4a1 1 0 010-1.4z" clip-rule="evenodd"/></svg>';
+
+  function getSelectedPatient() { return selectedId ? PharmaLensDB.getPatient(selectedId) : null; }
+  function setSelected(id) {
+    selectedId = id;
+    if (id) kvSet(SEL_KEY, id); else kvDel(SEL_KEY);
+    wsSetSelected(id);
+  }
+  function pendingCount(p) { return p.prescriptions.filter(function (r) { return r.status === 'pending_review'; }).length; }
+
+  function enterPharmacist() {
+    phSession = null; phSession = currentPharmacistId();
+    try { localStorage.setItem(LAST_PH_KEY, phSession); } catch (e) {}
+    restorePharmacistWorkspace();                               // connected patients come back after logout / login
+    var saved = kvGet(SEL_KEY) || (wsRead()[phSession] || {}).selected || null;
+    var list = PharmaLensDB.listConnected();
+    var found = saved && list.some(function (p) { return p.id === saved; });
+    setSelected(found ? saved : (list[0] ? list[0].id : null));
+    $('patientSearch').value = ''; filterText = '';
+    renderSidebar();
+    renderWorkspace();
+  }
+
+  /* ----- Sidebar ----- */
+  function renderSidebar() {
+    var all = PharmaLensDB.listConnected();
+    $('patientCount').textContent = String(all.length);
+    var q = filterText.trim().toLowerCase();
+    var shown = all.filter(function (p) {
+      return !q || p.name.toLowerCase().indexOf(q) !== -1 || p.id.toLowerCase().indexOf(q) !== -1;
+    });
+    var ul = $('patientList');
+    ul.innerHTML = '';
+    if (!shown.length) {
+      var li0 = document.createElement('li');
+      li0.className = 'px-3 py-6 text-center text-sm text-slate-500';
+      li0.textContent = all.length ? 'No patients match your search.' : 'No patients connected yet. Choose Connect Patient and enter a Patient ID.';
+      ul.appendChild(li0);
+      return;
+    }
+    shown.forEach(function (p) {
+      var sel = p.id === selectedId, pend = pendingCount(p), unread = p.unread || 0;
+      var badges = '';
+      if (pend) badges += '<span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">' + pend + ' to review</span>';
+      if (unread) badges += '<span class="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white"><span class="h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true"></span>' + (unread > 1 ? unread + ' New Messages' : 'New Message') + '</span>';
+      var li = document.createElement('li');
+      li.innerHTML =
+        '<button type="button" data-id="' + esc(p.id) + '" aria-current="' + (sel ? 'true' : 'false') + '" class="btn flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition duration-200 ' +
+        (sel ? 'border-teal-200 bg-teal-50' : 'border-transparent hover:bg-slate-50') + '">' +
+          '<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-teal-brand">' + esc(initials(p.name)) + '</span>' +
+          '<span class="min-w-0 flex-1">' +
+            '<span class="block truncate text-sm font-semibold text-slate-900">' + esc(p.name) + '</span>' +
+            '<span class="block font-mono text-xs text-slate-500">' + esc(p.id) + '</span>' +
+            (badges ? '<span class="mt-1.5 flex flex-wrap gap-1">' + badges + '</span>' : '') +
+          '</span>' +
+        '</button>';
+      ul.appendChild(li);
+    });
+  }
+  $('patientList').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-id]');
+    if (b) selectPatient(b.getAttribute('data-id'));
+  });
+  $('patientSearch').addEventListener('input', function (e) { filterText = e.target.value; renderSidebar(); });
+
+  function selectPatient(id) {
+    setSelected(id);
+    renderSidebar();
+    renderWorkspace();
+    replayAnim($('wsPatient'));
+  }
+
+  /* ----- Workspace ----- */
+  function renderWorkspace() {
+    var p = getSelectedPatient();
+    if (!p) {
+      setVisible($('wsPatient'), false);
+      setVisible($('wsEmpty'), true);
+      $('wsEmptyText').textContent = PharmaLensDB.listConnected().length
+        ? 'Select a patient from the sidebar to open their workspace.'
+        : 'No patients connected yet. Choose Connect Patient and enter a Patient ID to open their workspace.';
+      return;
+    }
+    setVisible($('wsEmpty'), false);
+    setVisible($('wsPatient'), true);
+    $('wsAvatar').textContent = initials(p.name);
+    $('wsName').textContent = p.name;
+    $('wsId').textContent = p.id;
+    var meta = [];
+    if (p.dob) meta.push('DOB ' + fmtDate(p.dob));
+    if (p.email) meta.push(p.email);
+    $('wsMeta').textContent = meta.join(' \u00b7 ');
+    chatSigPh = null; rxSigPh = null;                          // new patient: force a full redraw of both sections
+    renderChatPh();
+    renderReviewPh();
+  }
+
+  /* Query interface */
+  var chatSigPh = null, rxSigPh = null;
+  function msgSig(msgs) {
+    var n = msgs.length;
+    return n + ':' + (n ? msgs[n - 1].timestamp + msgs[n - 1].sender : '');
+  }
+  function renderChatPh() {
+    var p = getSelectedPatient();
+    if (!p) return;
+    var sig = p.id + '|' + msgSig(p.queries);
+    if (sig !== chatSigPh) {                                   // skip the redraw if nothing changed, so scroll position stays put
+      chatSigPh = sig;
+      buildChat($('phChatLog'), p.queries, 'pharmacist', shortName(p.name), 'No questions from this patient yet.');
+    }
+    markSeenIfVisible();
+  }
+  /* The chat on screen counts as read, unless this tab is in the background */
+  function markSeenIfVisible() {
+    if (!isPharm || !selectedId || document.visibilityState === 'hidden') return;
+    if (PharmaLensDB.unreadCount(selectedId) > 0) { PharmaLensDB.markSeen(selectedId); renderSidebar(); }
+  }
+  var phChatForm = $('phChatForm'), phChatInput = $('phChatInput');
+  phChatForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var text = phChatInput.value.trim();
+    if (!text || !selectedId) return;
+    if (!PharmaLensDB.addQuery(selectedId, 'pharmacist', text)) {
+      showToast('Could not save your reply. Check browser storage settings.', true);
+      return;
+    }
+    phChatInput.value = '';
+    autoGrow(phChatInput);
+    renderChatPh();
+    renderSidebar();                // clears the "New message" badge
+  });
+  phChatInput.addEventListener('input', function () { autoGrow(phChatInput); });
+  phChatInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      phChatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+  });
+
+  /* Prescription review */
+  function badgeHtml(st) {
+    var s = STATUS[st] || STATUS.matched;
+    return '<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ' + s.cls + '"><span class="h-1.5 w-1.5 rounded-full ' + s.dot + '"></span>' + s.label + '</span>';
+  }
+  function eyeBtn(rx, med) {
+    return '<button type="button" data-action="view" data-rx="' + esc(rx.id) + '" data-med="' + esc(med.id) + '" title="View Original Image" aria-label="View original image for ' + esc(med.name) + '" ' +
+      'class="btn ml-2 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white align-middle text-slate-600 transition duration-200 hover:border-teal-brand hover:text-teal-brand">' + EYE + '</button>';
+  }
+  /* Explanation shown when a flagged row is expanded */
+  function panelHtml(m) {
+    function h(t) { return '<p class="text-sm font-semibold text-slate-900">' + t + '</p>'; }
+    function b(t) { return '<p class="mt-1 text-sm text-slate-600">' + t + '</p>'; }
+    var prev = esc(m.previous), next = esc(m.extracted), tail = 'Check the original image and confirm the intended dose.';
+    if (m.status === 'unreliable') {
+      var lead = m.previous === m.extracted ? 'Both visits list ' + prev + '. ' : 'Visit 1 lists ' + prev + ', and Visit 2 lists ' + next + '. ';
+      return h('Unreliable sensor reading') + b(lead + 'The OCR reading was flagged (see Sensor Telemetry), so the value may be missing, smudged or misread. ' + tail);
+    }
+    if (m.kind === 'missing') return h('Medicine not found on the prescription') + b('Visit 1 (Hospital EHR) lists ' + prev + ', but nothing for ' + esc(m.name) + ' was found on the uploaded image. Check the original image and confirm whether it was omitted.');
+    if (m.kind === 'new') return h('No matching Hospital EHR record') + b('Visit 2 lists ' + next + ', but there is no Hospital EHR record to compare it with. ' + tail);
+    return h('Dose changed between visits') + b('Visit 1 lists ' + prev + ', and Visit 2 lists ' + next + '. ' +
+      (m.staleConflict ? 'The two readings come from different sources, and the older record is stale. Neither is assumed correct, so check the original image and reconcile the intended dose.' : tail));
+  }
+  function medRowsHtml(rx) {
+    return rx.medications.map(function (m) {
+      var key = rx.id + ':' + m.id, isC = needsReview(m), isU = m.status === 'unreliable';
+      var open = !!openPanels[key], editing = !!openEdits[key];
+      var cellName = '<td class="px-5 py-4 font-semibold text-slate-900"><span class="align-middle">' + esc(m.name) + '</span>' + eyeBtn(rx, m) + '</td>';
+      var cellPrev = '<td class="px-5 py-4 text-slate-600"><span class="block">' + esc(m.previous) + '</span>' + sourceHtml(m.sourcePrev, true) + '</td>';
+      var cellNew = '<td class="px-5 py-4 text-slate-600"><span class="block">' + esc(m.extracted) + '</span>' + sourceHtml(m.sourceNew, false) + '</td>';
+      var cellTel = telemetryCellHtml(m);
+      if (!isC) {
+        var title = m.decidedAt ? ' title="Decision recorded ' + esc(fmtTime(m.decidedAt)) + '"' : '';
+        return '<tr class="hover:bg-slate-50">' + cellName + cellPrev + cellNew + '<td class="px-5 py-4"' + title + '>' + badgeHtml(m.status) + '</td>' + cellTel + '</tr>';
+      }
+      return '<tr class="conflict-row ' + (isU ? 'hover:bg-yellow-50/60' : 'hover:bg-red-50/40') + '" tabindex="0" role="button" aria-expanded="' + open + '" data-action="toggle" data-key="' + esc(key) + '">' +
+          cellName + cellPrev + cellNew +
+          '<td class="px-5 py-4"><span class="inline-flex items-center gap-2">' + badgeHtml(m.status) + CHEV + '</span></td>' + cellTel + '</tr>' +
+        '<tr><td colspan="5" class="p-0"><div class="reveal' + (open ? ' open' : '') + '" data-panel="' + esc(key) + '"><div>' +
+          '<div class="border-t border-red-100 bg-red-50/50 px-5 py-5">' +
+            panelHtml(m) +
+            '<div class="reveal' + (editing ? ' open' : '') + '" data-edit="' + esc(key) + '"><div>' +
+              '<div class="flex flex-wrap items-center gap-2 pt-4">' +
+                '<label class="sr-only">Corrected dose for ' + esc(m.name) + '</label>' +
+                '<input type="text" value="' + esc(m.extracted) + '" class="w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />' +
+                '<button type="button" data-action="save" data-rx="' + esc(rx.id) + '" data-med="' + esc(m.id) + '" class="btn rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">Save dose</button>' +
+              '</div>' +
+            '</div></div>' +
+            '<div class="mt-4 flex flex-wrap gap-2">' +
+              '<button type="button" data-action="approve" data-rx="' + esc(rx.id) + '" data-med="' + esc(m.id) + '" class="btn rounded-lg bg-teal-brand px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-teal-deep">Approve</button>' +
+              '<button type="button" data-action="edit" data-rx="' + esc(rx.id) + '" data-med="' + esc(m.id) + '" class="btn rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition duration-200 hover:bg-slate-50">Edit</button>' +
+              '<button type="button" data-action="pass" data-rx="' + esc(rx.id) + '" data-med="' + esc(m.id) + '" class="btn rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition duration-200 hover:bg-slate-100">Pass on</button>' +
+            '</div>' +
+          '</div>' +
+        '</div></div></td></tr>';
+    }).join('');
+  }
+  function rxCardHtml(rx) {
+    var conflicts = rx.medications.filter(needsReview).length;
+    var staleOpen = rx.medications.some(function (m) { return m.staleConflict && m.status === 'conflict'; });
+    var banner = staleOpen
+      ? '<div role="alert" class="flex items-start gap-3 border-b border-red-200 bg-red-50 px-5 py-3.5 text-sm font-semibold text-red-800">' + ALERT + '<p>' + STALE_BANNER + '</p></div>'
+      : '';
+    var pending = rx.status === 'pending_review';
+    var headBadge = pending
+      ? '<span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">' + conflicts + (conflicts === 1 ? ' conflict' : ' conflicts') + ' to review</span>'
+      : '<span class="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-brand ring-1 ring-inset ring-teal-200">Reviewed</span>';
+    return '<div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3.5">' +
+        '<div class="min-w-0"><h4 class="truncate font-semibold text-slate-900">' + esc(rx.fileName || 'Prescription upload') + '</h4>' +
+        '<p class="text-sm text-slate-500">Uploaded ' + esc(fmtTime(rx.uploadedAt)) + ' \u00b7 by ' + esc(rx.uploadedBy === 'pharmacist' ? 'pharmacist' : 'patient') + ' \u00b7 <span class="font-mono">' + esc(rx.id) + '</span></p></div>' +
+        headBadge +
+      '</div>' + banner +
+      '<div class="overflow-x-auto"><table class="w-full min-w-[820px] text-left text-sm">' +
+        '<thead class="bg-slate-50 text-slate-500"><tr><th class="px-5 py-3 font-semibold">Medicine</th><th class="px-5 py-3 font-semibold">Visit 1</th><th class="px-5 py-3 font-semibold">Visit 2</th><th class="px-5 py-3 font-semibold">Status</th><th class="px-5 py-3 font-semibold">Sensor Telemetry (OCR)</th></tr></thead>' +
+        '<tbody class="divide-y divide-slate-100">' + (medRowsHtml(rx) || '<tr><td colspan="5" class="px-5 py-6 text-center text-slate-500">No medications were extracted from this upload.</td></tr>') + '</tbody></table></div>' +
+      '<p class="border-t border-slate-100 px-5 py-3 text-sm text-slate-500">Values were read from the uploaded image by OCR (Google Gemini) and need your review. Use the eye icon to compare with the original image.</p>';
+  }
+  function rxSignature(p) {                                    // ignores the big image data on purpose
+    return p.id + '|' + p.prescriptions.map(function (rx) { return rx.id + rx.status + JSON.stringify(rx.medications); }).join('|');
+  }
+  function refreshReviewPh() {
+    var p = getSelectedPatient();
+    if (p && rxSignature(p) !== rxSigPh) renderReviewPh();
+  }
+  function renderReviewPh() {
+    var p = getSelectedPatient(), list = $('phRxList');
+    if (!p) return;
+    rxSigPh = rxSignature(p);
+    list.innerHTML = '';
+    var rxs = p.prescriptions.slice().reverse();         // newest first
+    var total = 0;
+    rxs.forEach(function (rx) { total += rx.medications.filter(needsReview).length; });
+    $('phRxSummary').textContent = !rxs.length ? 'No uploads yet' : (total ? total + (total === 1 ? ' conflict' : ' conflicts') + ' to review' : 'All conflicts resolved');
+    if (!rxs.length) {
+      var empty = document.createElement('div');
+      empty.className = 'rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500';
+      empty.textContent = 'No prescriptions to review yet. When this patient uploads one from their portal it appears here.';
+      list.appendChild(empty);
+      return;
+    }
+    rxs.forEach(function (rx) {
+      var art = document.createElement('article');
+      art.className = 'overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm';
+      art.setAttribute('data-rx-card', rx.id);
+      art.innerHTML = rxCardHtml(rx);
+      list.appendChild(art);
+    });
+  }
+
+  function togglePanel(row) {
+    var key = row.getAttribute('data-key');
+    var panel = $('phRxList').querySelector('[data-panel="' + key + '"]');
+    if (!panel) return;
+    var next = !panel.classList.contains('open');
+    panel.classList.toggle('open', next);
+    row.setAttribute('aria-expanded', String(next));
+    if (next) openPanels[key] = true;
+    else {
+      delete openPanels[key]; delete openEdits[key];
+      var eb = $('phRxList').querySelector('[data-edit="' + key + '"]');
+      if (eb) eb.classList.remove('open');
+    }
+  }
+  function decide(rxId, medId, changes, okMsg) {
+    var key = rxId + ':' + medId;
+    changes.decidedAt = new Date().toISOString();
+    changes.decidedBy = 'pharmacist';
+    if (!PharmaLensDB.updateMedication(selectedId, rxId, medId, changes)) {
+      showToast('Could not save the decision. Check browser storage settings.', true);
+      return;
+    }
+    delete openPanels[key]; delete openEdits[key];
+    renderReviewPh();
+    renderSidebar();
+    showToast(okMsg);
+  }
+
+  var rxList = $('phRxList');
+  rxList.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-action]');
+    if (!t) return;
+    var a = t.getAttribute('data-action'), rxId = t.getAttribute('data-rx'), medId = t.getAttribute('data-med');
+    var key = rxId + ':' + medId, p = getSelectedPatient();
+    if (a === 'toggle') { togglePanel(t); return; }
+    if (a === 'view') { openImage(rxId, medId); return; }
+    if (a === 'edit') {
+      var eb = rxList.querySelector('[data-edit="' + key + '"]');
+      if (!eb) return;
+      var on = !eb.classList.contains('open');
+      eb.classList.toggle('open', on);
+      if (on) { openEdits[key] = true; var inp = eb.querySelector('input'); if (inp) inp.focus(); } else delete openEdits[key];
+      return;
+    }
+    var med = null;
+    if (p) p.prescriptions.forEach(function (rx) { if (rx.id === rxId) rx.medications.forEach(function (m) { if (m.id === medId) med = m; }); });
+    if (!med) return;
+    if (a === 'approve') decide(rxId, medId, { status: 'approved' }, med.name + ' approved. Decision saved.');
+    else if (a === 'pass') decide(rxId, medId, { status: 'passed' }, med.name + ' passed on. Decision saved.');
+    else if (a === 'save') {
+      var eb2 = rxList.querySelector('[data-edit="' + key + '"]');
+      var v = eb2 ? eb2.querySelector('input').value.trim() : '';
+      if (!v) return;
+      decide(rxId, medId, { status: 'edited', extracted: v, originalExtracted: med.originalExtracted || med.extracted }, med.name + ' dose updated. Decision saved.');
+    }
+  });
+  rxList.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.getAttribute && e.target.getAttribute('data-action') === 'toggle') {
+      e.preventDefault();
+      togglePanel(e.target);
+    }
+  });
+
+  /* Original image verification modal */
+  function openImage(rxId, medId) {
+    var p = getSelectedPatient();
+    if (!p) return;
+    var rx = null, med = null;
+    p.prescriptions.forEach(function (r) { if (r.id === rxId) { rx = r; r.medications.forEach(function (m) { if (m.id === medId) med = m; }); } });
+    if (!rx) return;
+    $('imgMeta').textContent = (rx.fileName || 'Uploaded file') + ' \u00b7 ' + fmtTime(rx.uploadedAt) + ' \u00b7 ' + rx.id;
+    $('imgNote').textContent = med ? 'Extracted value to verify: ' + med.name + ' \u2014 ' + med.extracted + '.' : '';
+    var img = $('imgFull');
+    if (rx.imageData) {
+      img.src = rx.imageData;
+      img.hidden = false; $('imgMissing').hidden = true;
+    } else {
+      img.removeAttribute('src');
+      img.hidden = true; $('imgMissing').hidden = false;
+    }
+    openOverlay(imgModal, $('imgClose'));
+  }
+  $('imgClose').addEventListener('click', function () { closeOverlay(imgModal); });
+  imgModal.addEventListener('click', function (e) { if (e.target === imgModal) closeOverlay(imgModal); });
+
+  /* Connect Patient modal: look the ID up in pharmalens_db and link it to this pharmacist */
+  var form = $('patientForm'), idInput = $('pId'), connectErr = $('connectError');
+  function showConnectError(msg) { connectErr.textContent = msg; connectErr.hidden = false; idInput.focus(); }
+  function openModal() { form.reset(); connectErr.hidden = true; openOverlay(modal, idInput); }
+  function closeModal() { closeOverlay(modal); }
+  $('connectBtn').addEventListener('click', openModal);
+  $('cancelModal').addEventListener('click', function () { form.reset(); closeModal(); });
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  idInput.addEventListener('input', function () { connectErr.hidden = true; });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var res = PharmaLensDB.connectPatient(idInput.value);
+    if (res.status === 'empty') { showConnectError('Enter a Patient ID, for example PL-4928.'); return; }
+    if (res.status === 'notfound') { showConnectError('No patient found with ID ' + res.id + '. Check it with the patient. It appears next to their name in their portal.'); return; }
+    if (res.status === 'error') { showConnectError('Could not save the connection. Check browser storage settings.'); return; }
+    closeModal();
+    form.reset();
+    filterText = ''; $('patientSearch').value = '';
+    selectPatient(res.patient.id);                             // links it into the sidebar and opens their workspace
+    var btn = $('patientList').querySelector('button[data-id="' + res.patient.id + '"]');
+    if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    showToast(res.status === 'exists' ? res.patient.name + ' is already connected.' : 'Connected to ' + res.patient.name + ' (' + res.patient.id + ').');
+  });
+
+  /* ======================================================================
+     PATIENT PORTAL
+     ====================================================================== */
+  var pill = '<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-brand"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-35 12 12)"/><path d="M9.5 10.2l5 3.6"/></svg></span>';
+  var pillMuted = pill.replace('bg-teal-50 text-teal-brand', 'bg-slate-100 text-slate-500');
+
+  function addItem(list, icon, title, sub, badge) {
+    var li = document.createElement('li');
+    li.className = 'flex items-center gap-4 p-4 sm:p-5';
+    li.innerHTML = icon + '<div class="min-w-0 flex-1"><p class="font-semibold text-slate-900"></p><p class="text-sm text-slate-500"></p></div>' +
+      (badge ? '<span class="hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 sm:inline-block"></span>' : '');
+    var p = li.querySelectorAll('p');
+    p[0].textContent = title; p[1].textContent = sub;
+    if (badge) li.querySelector('span:last-child').textContent = badge;
+    list.appendChild(li);
+  }
+  /* A medicine counts as reconciled when the pharmacist approved/edited it, or it matched cleanly on an upload whose review is complete */
+  function isReconciled(rx, m) {
+    var dose = String(m.extracted == null ? '' : m.extracted).trim();
+    if (!dose || dose === NOT_FOUND || dose === 'Illegible') return false;
+    return m.status === 'approved' || m.status === 'edited' || (m.status === 'matched' && rx.status === 'reviewed');
+  }
+  function emptyRow(title, text) {
+    var li = document.createElement('li');
+    li.className = 'flex flex-col items-center gap-2 px-6 py-10 text-center';
+    li.innerHTML = '<svg class="text-slate-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-35 12 12)"/><path d="M9.5 10.2l5 3.6"/></svg><p class="font-semibold text-slate-700"></p><p class="max-w-sm text-sm text-slate-500"></p>';
+    var ps = li.querySelectorAll('p');
+    ps[0].textContent = title; ps[1].textContent = text;
+    return li;
+  }
+  function patientRxNewestFirst() {
+    var p = patient ? PharmaLensDB.getPatient(patient.id) : null;
+    return p ? p.prescriptions.slice().sort(function (a, b) { return String(b.uploadedAt).localeCompare(String(a.uploadedAt)); }) : [];
+  }
+  /* History tab: every prescription this patient has uploaded, newest first, read from pharmalens_db */
+  function renderHistory() {
+    var ul = $('historyList'), rxs = patientRxNewestFirst();
+    ul.innerHTML = '';
+    if (!rxs.length) { ul.appendChild(emptyRow('No past prescriptions on file', 'Prescriptions you upload will be listed here with their review status.')); return; }
+    rxs.forEach(function (rx) {
+      var names = (rx.medications || []).map(function (m) { return m.name; }).filter(Boolean);
+      var reviewed = rx.status === 'reviewed';
+      var li = document.createElement('li');
+      li.className = 'flex items-center gap-4 p-4 sm:p-5';
+      li.innerHTML = pillMuted + '<div class="min-w-0 flex-1"><p class="font-semibold text-slate-900"></p><p class="text-sm text-slate-500"></p></div>' +
+        '<span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ' + (reviewed ? 'bg-teal-50 text-teal-brand ring-teal-200' : 'bg-amber-50 text-amber-700 ring-amber-200') + '">' + (reviewed ? 'Reviewed' : 'Awaiting review') + '</span>';
+      var ps = li.querySelectorAll('p');
+      ps[0].textContent = 'Prescription uploaded ' + fmtDay(rx.uploadedAt);
+      ps[1].textContent = names.length ? names.join(', ') : 'No medicines extracted';
+      ul.appendChild(li);
+    });
+  }
+  /* "Download Official Record" print sheet: only pharmacist-reconciled medicines, from pharmalens_db */
+  function renderPrintRecord() {
+    var ol = $('printList');
+    ol.innerHTML = '';
+    var any = false;
+    patientRxNewestFirst().forEach(function (rx) {
+      (rx.medications || []).forEach(function (m) {
+        if (!isReconciled(rx, m)) return;
+        any = true;
+        var li = document.createElement('li'), small = document.createElement('small');
+        li.appendChild(document.createTextNode(m.name + ' ' + m.extracted));
+        small.textContent = 'Reviewed ' + fmtDay(m.decidedAt || rx.uploadedAt);
+        li.appendChild(small);
+        ol.appendChild(li);
+      });
+    });
+    if (!any) { var li0 = document.createElement('li'); li0.textContent = 'No verified medications on file.'; ol.appendChild(li0); }
+  }
+  function renderPatientLists() { renderCurrentMeds(); renderHistory(); renderPrintRecord(); }
+
+  /* Current Medications: built from pharmalens_db, never from hardcoded markup.
+     Shown: doses the pharmacist approved or edited, plus clean matches from prescriptions whose review is complete.
+     Not shown: open conflicts, unreliable readings, passed-on rows, and placeholder values such as "Not found on prescription".
+     If a medicine was reconciled on several uploads, the most recent reconciled dose wins. */
+  function currentMedsFor(p) {
+    var latest = {};
+    p.prescriptions.slice().sort(function (a, b) { return String(a.uploadedAt).localeCompare(String(b.uploadedAt)); }).forEach(function (rx) {
+      (rx.medications || []).forEach(function (m) {
+        if (!isReconciled(rx, m)) return;
+        var dose = String(m.extracted).trim();
+        latest[String(m.name).trim().toLowerCase()] = { name: String(m.name).trim(), dose: dose, when: m.decidedAt || rx.uploadedAt };
+      });
+    });
+    return Object.keys(latest).map(function (k) { return latest[k]; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name); });
+  }
+  function renderCurrentMeds() {
+    var ul = $('currentList');
+    ul.innerHTML = '';
+    var p = patient ? PharmaLensDB.getPatient(patient.id) : null;
+    var meds = p ? currentMedsFor(p) : [];
+    setVisible($('verifiedBanner'), meds.length > 0);       // only claim "verified" when something is listed
+    if (!meds.length) {
+      var waiting = p ? p.prescriptions.filter(function (r) { return r.status === 'pending_review'; }).length : 0;
+      var li = document.createElement('li');
+      li.className = 'flex flex-col items-center gap-2 px-6 py-10 text-center';
+      li.innerHTML = '<svg class="text-slate-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-35 12 12)"/><path d="M9.5 10.2l5 3.6"/></svg>' +
+        '<p class="font-semibold text-slate-700">No active medications on file</p><p class="max-w-sm text-sm text-slate-500"></p>';
+      li.querySelector('p:last-child').textContent = waiting
+        ? 'Your uploaded prescription is waiting for your pharmacist to review it. It will appear here once it has been reconciled.'
+        : 'Medicines appear here after your pharmacist has reviewed a prescription you upload.';
+      ul.appendChild(li);
+      return;
+    }
+    meds.forEach(function (m) {
+      addItem(ul, pill, m.name + ' - ' + m.dose, 'Reviewed by your pharmacist' + (fmtTime(m.when) ? ' \u00b7 ' + fmtTime(m.when) : ''), 'Verified');
+    });
+  }
+  $('printDate').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  /* Patient identity + chat are refreshed every time the patient portal is shown */
+  function enterPatient() {
+    patient = getCurrentPatient();
+    if (patient) {
+      $('navPatientName').textContent = shortName(patient.name);
+      $('navPatientId').textContent = 'ID: ' + patient.id;
+      $('printPatient').textContent = shortName(patient.name) + ' (' + patient.id + ')';
+      setVisible($('navPatient'), true);
+    }
+    showTab('current');
+    renderPatientLists();
+    chatSigPt = null;
+    renderChat();
+  }
+
+  /* Current / History toggle */
+  var tabs = { current: $('currentTab'), history: $('historyTab') };
+  var tabBtns = { current: $('tabCurrent'), history: $('tabHistory') };
+  function showTab(name) {
+    Object.keys(tabs).forEach(function (k) {
+      var on = k === name;
+      setVisible(tabs[k], on);
+      if (on) replayAnim(tabs[k]);
+      tabBtns[k].setAttribute('aria-pressed', String(on));
+      tabBtns[k].className = 'btn rounded-lg px-3 py-1.5 text-sm font-semibold transition duration-200 ' +
+        (on ? 'bg-white text-teal-brand shadow-sm' : 'text-slate-500 hover:text-slate-800');
+    });
+  }
+  tabBtns.current.addEventListener('click', function () { showTab('current'); });
+  tabBtns.history.addEventListener('click', function () { showTab('history'); });
+
+  /* Patient upload: processing state, then toast */
+  var ptFile = $('ptFile'), ptBtn = $('ptUploadBtn'), ptLabel = $('ptUploadLabel');
+  ptBtn.addEventListener('click', function () { ptFile.click(); });
+  ptFile.addEventListener('change', function () {
+    if (!ptFile.files || !ptFile.files.length) return;
+    var f = ptFile.files[0], started = Date.now();
+    if (!patient) { ptFile.value = ''; showToast('Could not find your patient profile.', true); return; }
+    ptBtn.disabled = true;
+    ptLabel.textContent = 'Reading prescription...';
+    submitPrescription(patient.id, f, 'patient', function (rx, noImage, err) {
+      setTimeout(function () {
+        ptBtn.disabled = false;
+        ptLabel.textContent = 'Upload New Prescription';
+        ptFile.value = '';
+        renderPatientLists();
+        if (!rx) showToast(err || 'Could not save the upload. Check browser storage settings.', true);
+        else if (noImage) showToast('Prescription uploaded, but the image could not be stored. Awaiting pharmacist review.');
+        else showToast('Prescription uploaded securely. Awaiting pharmacist review.');
+      }, Math.max(0, 1500 - (Date.now() - started)));
+    });
+  });
+
+  /* Patient query / chat (saved under this patient in pharmalens_db) */
+  var chatLog = $('chatLog'), chatForm = $('chatForm'), chatInput = $('chatInput');
+  var chatSigPt = null;
+  function renderChat() {
+    if (!patient) return;
+    var p = PharmaLensDB.getPatient(patient.id);
+    var sig = patient.id + '|' + msgSig(p ? p.queries : []);
+    if (sig === chatSigPt) return;
+    chatSigPt = sig;
+    buildChat(chatLog, p ? p.queries : [], 'patient', 'Pharmacist', 'No messages yet. Ask your pharmacist your first question below.');
+  }
+  chatForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var text = chatInput.value.trim();
+    if (!text || !patient) return;
+    if (!PharmaLensDB.addQuery(patient.id, 'patient', text)) {
+      showToast('Could not save your message. Check browser storage settings.', true);
+      return;
+    }
+    chatInput.value = '';
+    autoGrow(chatInput);
+    renderChat();
+  });
+  chatInput.addEventListener('input', function () { autoGrow(chatInput); });
+  chatInput.addEventListener('keydown', function (e) {        // Enter sends, Shift+Enter adds a new line
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+  });
+
+  /* Print to PDF */
+  $('printBtn').addEventListener('click', function () { window.print(); });
+
+  /* Live sync: changes made in another tab re-render whichever portal is showing */
+  window.addEventListener('storage', function (e) {
+    if (e.key !== DB_KEY) return;
+    resync();
+  });
+  function syncPharm() {                                        // everything the pharmacist sees comes from pharmalens_db
+    if (selectedId && !PharmaLensDB.isConnected(selectedId)) { setSelected(null); renderWorkspace(); }
+    renderSidebar();
+    if (selectedId) { renderChatPh(); refreshReviewPh(); }
+  }
+  function resync() {
+    if (isPharm) syncPharm(); else { renderChat(); renderPatientLists(); }
+  }
+  /* Safety net: re-read the database whenever this tab comes back into view */
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') resync(); });
+  window.addEventListener('focus', resync);
+
+  window.addEventListener('pageshow', function (ev) {        // restored from back/forward cache after logging out or in
+    if (!ev.persisted) return;
+    if (!getRole()) { window.location.replace('login.html'); return; }
+    window.PLTheme.apply();
+    themeSel.value = window.PLTheme.get();
+    applyRole();
+  });
+
+  applyRole();
+})();
+</script>
+</body>
+</html>
